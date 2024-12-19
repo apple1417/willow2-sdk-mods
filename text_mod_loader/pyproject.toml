@@ -1,0 +1,16 @@
+[project]
+name = "text_mod_loader"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Displays Text Mods from binaries in the SDK mods menu.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/text_mod_loader/Readme.md#changelog"
+
+[tool.sdkmod]
+name = "Text Mod Loader"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+coop_support = "ClientSide"
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/text_mod_loader.zip"
