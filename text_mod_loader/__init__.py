@@ -3,14 +3,42 @@
 if True:
     assert __import__("mods_base").__version_info__ >= (1, 5), "Please update the SDK"
 
-from mods_base import ButtonOption, Library, build_mod
+from typing import Any
 
-from .loader import load_all_text_mods
+from mods_base import ButtonOption, Library, build_mod, hook
+
+from .loader import all_text_mods, load_all_text_mods
+from .settings import (
+    all_settings,
+    iter_auto_enabled_paths,
+    sanitize_mod_paths,
+    suppress_auto_enable_updates,
+)
 
 __version__: str
 __version_info__: tuple[int, ...]
 
-reload_option = ButtonOption("Reload Text Mods", on_press=lambda _: load_all_text_mods(False))
 
-mod = build_mod(cls=Library)
+# This hook fires on the main menu - importantly after all the main packages have been loaded and
+# after receiving hotfixes. This is the earliest we can safely auto enable text mods.
+@hook("WillowGame.FrontendGFxMovie:Start")
+def auto_enable_hook(*_: Any) -> None:
+    with suppress_auto_enable_updates():
+        for path in iter_auto_enabled_paths():
+            if (text_mod := all_text_mods.get(path)) is not None:
+                text_mod.enable()
+
+    # Don't re-run if the user quits back to title
+    auto_enable_hook.disable()
+
+
+mod = build_mod(
+    cls=Library,
+    options=[
+        ButtonOption("Reload Text Mods", on_press=lambda _: load_all_text_mods(False)),
+        *all_settings,
+    ],
+)
+sanitize_mod_paths()
+
 load_all_text_mods(True)

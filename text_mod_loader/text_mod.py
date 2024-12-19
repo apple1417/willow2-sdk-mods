@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from mods_base import Game, Mod, get_pc
 
@@ -13,12 +13,15 @@ if TYPE_CHECKING:
 from ui_utils import TrainingBox
 
 from .hotfixes import any_hotfix_used, is_hotfix_service
+from .settings import change_mod_auto_enable
 
 
 @dataclass
 class TextMod(Mod):
     author: str = "Text Mod Loader"
     version: str = ""
+
+    auto_enable: Literal[False] = False  # pyright: ignore[reportIncompatibleVariableOverride]
 
     _: KW_ONLY
 
@@ -129,8 +132,10 @@ class TextMod(Mod):
             case TextModState.Disabled:
                 get_pc().ConsoleCommand(f'exec "{self.file}"')
                 self.state = TextModState.Enabled
+                change_mod_auto_enable(self, True)
             case TextModState.DisableOnRestart:
                 self.state = TextModState.Enabled
+                change_mod_auto_enable(self, True)
 
     def disable(self, dont_update_setting: bool = False) -> None:  # noqa: D102
         super().disable(dont_update_setting)
@@ -150,6 +155,7 @@ class TextMod(Mod):
 
             case TextModState.Enabled:
                 self.state = TextModState.DisableOnRestart
+                change_mod_auto_enable(self, False)
 
     def get_status(self) -> str:  # noqa: D102
         if Game.get_current() not in self.supported_games:
