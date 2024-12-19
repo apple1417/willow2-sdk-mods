@@ -4,7 +4,7 @@ from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypedDict
 
-from mods_base import BaseOption, HiddenOption
+from mods_base import BaseOption, Game, HiddenOption
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -13,12 +13,12 @@ if TYPE_CHECKING:
 
 
 # Mark this as non total just to make sure we check everything, in case someone does manual edits
-class ModInfo(TypedDict, total=False):
+class ModInfo(TypedDict):
     modify_time: float
-    spark_service_idx: int | None
-    recommended_game: str | None
-
     ignore_me: bool
+
+    spark_service_idx: int | None
+    recommended_game: Game | None
 
     title: str
     author: str
@@ -99,3 +99,61 @@ def iter_auto_enabled_paths() -> Iterator[Path]:
         The mod file paths
     """
     yield from (Path(x) for x in auto_enable.value)
+
+
+def get_cached_mod_info(path: Path) -> ModInfo | None:
+    """
+    If we have the mod info for the given path cached, gets it.
+
+    Args:
+        path: The path to check for mod info on.
+    Returns:
+        The mod info, or None if not cached.
+    """
+    if (raw_dict := mod_info.value.get(str(path.resolve()))) is None:
+        return None
+
+    # This is the only one we need to convert types on
+    raw_dict["recommended_game"] = Game.__members__.get(raw_dict["recommended_game"])
+
+    # Set some sane defaults.
+    # Not going to bother with more in depth sanity checking since it's really your fault if you're
+    # messing the settings manually
+    cached_info: ModInfo = {
+        "modify_time": 0,
+        "ignore_me": False,
+        "spark_service_idx": None,
+        "recommended_game": None,
+        "title": path.name,
+        "author": "Text Mod Loader",
+        "version": "",
+        "description": "",
+    } | raw_dict  # type: ignore
+
+    # If the file has been modified since we cached it, we can't trust our info
+    if path.stat().st_mtime > cached_info["modify_time"]:
+        return None
+
+    return cached_info
+
+
+def update_cached_mod_info(path: Path, info: ModInfo) -> None:
+    """
+    Cache the mod info for the given path.
+
+    Args:
+        path: The path to cache under.
+        info: The info to cache.
+    """
+    mod_info.value[str(path.resolve())] = {
+        "modify_time": info["modify_time"],
+        "ignore_me": info["ignore_me"],
+        "spark_service_idx": info["spark_service_idx"],
+        "recommended_game": None if (game := info["recommended_game"]) is None else game.name,
+        "title": info["title"],
+        "author": info["author"],
+        "version": info["version"],
+        "description": info["description"],
+    }
+
+    mod_info.save()

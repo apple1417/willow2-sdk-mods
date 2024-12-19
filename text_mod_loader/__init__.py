@@ -32,13 +32,18 @@ def auto_enable_hook(*_: Any) -> None:
     auto_enable_hook.disable()
 
 
+@ButtonOption("Reload Text Mods")
+def reload(_: ButtonOption) -> None:
+    mod.load_settings()
+    sanitize_mod_paths()
+
+    load_all_text_mods()
+
+
 mod = build_mod(
     cls=Library,
-    options=[
-        ButtonOption("Reload Text Mods", on_press=lambda _: load_all_text_mods(False)),
-        *all_settings,
-    ],
+    options=[reload, *all_settings],
 )
 sanitize_mod_paths()
 
-load_all_text_mods(True)
+load_all_text_mods()

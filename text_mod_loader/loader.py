@@ -4,18 +4,35 @@ from pathlib import Path
 from mods_base import deregister_mod, register_mod
 
 from .anti_circular_import import TextModState, all_text_mods
+from .settings import ModInfo, get_cached_mod_info, update_cached_mod_info
 from .text_mod import TextMod
 
 BINARIES_DIR = Path(sys.executable).parent.parent
 
 
-def load_all_text_mods(auto_enable: bool) -> None:
+def load_mod_info(path: Path) -> ModInfo:
     """
-    (Re-)Loads all text mods from binaries.
+    Loads metadata for a specific mod.
 
     Args:
-        auto_enable: If to enable any mods marked as such in the settings file.
+        path: The path to load from.
+    Returns:
+        The loaded mod info.
     """
+    return {
+        "modify_time": path.stat().st_mtime,
+        "ignore_me": False,
+        "spark_service_idx": None,
+        "recommended_game": None,
+        "title": path.name,
+        "author": "Text Mod Loader",
+        "version": "",
+        "description": "",
+    }
+
+
+def load_all_text_mods() -> None:
+    """(Re-)Loads all text mods from binaries."""
     # Iterate through a copy so we can delete while iterating
     for mod in list(all_text_mods.values()):
         mod.check_deleted()
@@ -43,17 +60,22 @@ def load_all_text_mods(auto_enable: bool) -> None:
         if entry in all_text_mods:
             continue
 
-        # load metadata
+        if (mod_info := get_cached_mod_info(entry)) is None:
+            mod_info = load_mod_info(entry)
+            update_cached_mod_info(entry, mod_info)
+
+        if mod_info["ignore_me"]:
+            continue
 
         mod = TextMod(
-            name=entry.name,
+            name=mod_info["title"],
+            author=mod_info["author"],
+            version=mod_info["version"],
             file=entry,
-            spark_service_idx=None,
-            recommended_game=None,
-            internal_description=None,
+            spark_service_idx=mod_info["spark_service_idx"],
+            recommended_game=mod_info["recommended_game"],
+            internal_description=mod_info["description"],
         )
-
-        _ = auto_enable
 
         all_text_mods[entry] = mod
         register_mod(mod)

@@ -18,9 +18,6 @@ from .settings import change_mod_auto_enable
 
 @dataclass
 class TextMod(Mod):
-    author: str = "Text Mod Loader"
-    version: str = ""
-
     auto_enable: Literal[False] = False  # pyright: ignore[reportIncompatibleVariableOverride]
 
     _: KW_ONLY
