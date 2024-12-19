@@ -7,7 +7,7 @@ Adds a few new console commands, and provides functionality for other mods to do
 """
 
 [project.urls]
-Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/command_extensions/Readme.md"
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/command_extensions/Readme.md#changelog"
 
 [tool.sdkmod]
 name = "Command Extensions"
