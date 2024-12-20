@@ -8,6 +8,12 @@ namespace ce {
 
 namespace {
 
+/**
+ * @brief Creates a python FileNotFoundError.
+ *
+ * @param filename The file which wasn't found.
+ * @return An exception to throw.
+ */
 pybind11::error_already_set file_not_found(const std::filesystem::path& filename) {
 #ifdef _WIN32
     PyErr_SetExcFromWindowsErrWithFilename(PyExc_FileNotFoundError, ERROR_FILE_NOT_FOUND,
