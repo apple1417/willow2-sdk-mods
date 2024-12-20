@@ -1,12 +1,11 @@
 #include "pch.h"
 #include "filtertool_parser.h"
+#include "parse_result.h"
 #include "util.h"
 
 namespace tml {
 
-std::vector<py::str> parse_filtertool_file(std::istream& stream) {
-    std::vector<py::str> comments;
-
+void parse_filtertool_file(std::istream& stream, ParseResult& parse_result) {
     // Discard the first line (root category header)
     std::string line;
     std::getline(stream, line);
@@ -28,7 +27,7 @@ std::vector<py::str> parse_filtertool_file(std::istream& stream) {
                 if (category_name.find(description) != CaseInsensitiveStringView::npos) {
                     // This is a dedicated description category
                     // Discard existing comments, and get them from this category's children instead
-                    comments.clear();
+                    parse_result.discard_comments();
                     started_description_category = true;
                     continue;
                 }
@@ -36,7 +35,7 @@ std::vector<py::str> parse_filtertool_file(std::istream& stream) {
 
         } else if (!is_command(trimmed)) {
             // Must be a comment, add to the list
-            comments.emplace_back(to_system_encoding_py_str(line));
+            parse_result.add_comment(line);
             continue;
         }
 
@@ -46,8 +45,6 @@ std::vector<py::str> parse_filtertool_file(std::istream& stream) {
         stream.seekg(-(ptrdiff_t)line.size(), std::ios::cur);
         break;
     }
-
-    return comments;
 }
 
 }  // namespace tml

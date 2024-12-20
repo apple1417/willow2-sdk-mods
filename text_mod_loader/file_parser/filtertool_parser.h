@@ -2,6 +2,7 @@
 #define FILE_PARSER_FILTERTOOL_PARSER_H
 
 #include "pch.h"
+#include "parse_result.h"
 
 namespace tml {
 
@@ -10,9 +11,10 @@ namespace tml {
  * @note Leaves the input stream directly after the point where comments finish, on the first
  *       command or category header.
  *
- * @return A list of description comments.
+ * @param stream The stream to read from.
+ * @param parse_result The parse result struct to extract comments into.
  */
-std::vector<py::str> parse_filtertool_file(std::istream& stream);
+void parse_filtertool_file(std::istream& stream, ParseResult& parse_result);
 
 }  // namespace tml
 

@@ -2,6 +2,7 @@
 #define FILE_PARSER_LINE_PARSER_H
 
 #include "pch.h"
+#include "parse_result.h"
 
 namespace tml {
 
@@ -9,9 +10,10 @@ namespace tml {
  * @brief Parses through a generic file stream line by line.
  * @note Leaves the input stream on the first command.
  *
- * @return A list of description comments.
+ * @param stream The stream to read from.
+ * @param parse_result The parse result struct to extract comments into.
  */
-std::vector<py::str> parse_file_line_by_line(std::istream& stream);
+void parse_file_line_by_line(std::istream& stream, ParseResult& parse_result);
 
 }  // namespace tml
 

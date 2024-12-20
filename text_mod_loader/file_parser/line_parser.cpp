@@ -1,12 +1,11 @@
 #include "pch.h"
 #include "line_parser.h"
+#include "parse_result.h"
 #include "util.h"
 
 namespace tml {
 
-std::vector<py::str> parse_file_line_by_line(std::istream& stream) {
-    std::vector<py::str> comments;
-
+void parse_file_line_by_line(std::istream& stream, ParseResult& parse_result) {
     for (std::string line; std::getline(stream, line);) {
         // If a line starts with a '#', trim them, and an optional single space
         if (line[0] == '#') {
@@ -17,7 +16,7 @@ std::vector<py::str> parse_file_line_by_line(std::istream& stream) {
 
             // Since we know none of our commands start with a '#', can add straight to comments
             // Pass a pointer to avoid allocating a new string, we know this one's null terminated
-            comments.emplace_back(to_system_encoding_py_str(&line[first_non_hash]));
+            parse_result.add_comment(&line[first_non_hash]);
             continue;
         }
 
@@ -26,7 +25,7 @@ std::vector<py::str> parse_file_line_by_line(std::istream& stream) {
 
         if (!is_command({first_non_space, line.end()}, true)) {
             // Must be a comment, add to the list
-            comments.emplace_back(to_system_encoding_py_str(line));
+            parse_result.add_comment(line);
             continue;
         }
 
@@ -35,8 +34,6 @@ std::vector<py::str> parse_file_line_by_line(std::istream& stream) {
         stream.seekg(-(ptrdiff_t)line.size(), std::ios::cur);
         break;
     }
-
-    return comments;
 }
 
 }  // namespace tml

@@ -2,24 +2,28 @@ from os import PathLike
 
 class BLCMParserError(RuntimeError): ...
 
-def parse(file_path: PathLike[str]) -> tuple[int | None, str | None, list[str]]:
+class ParseResult:
+    blimp_tags: dict[str, list[str]]
+    untagged_lines: list[str]
+    game: str | None
+    spark_service_idx: int | None
+
+def parse(file_path: PathLike[str]) -> ParseResult:
     """
     Parses the tml-specific info out of mod file.
 
     Args:
         file_path: The file to parse.
     Returns:
-        A tuple of the extracted spark service index (or None), the recommended game (or
-        None), and a list of the description comments.
+        The parsing result.
     """
 
-def parse_string(string: str) -> tuple[int | None, str | None, list[str]]:
+def parse_string(string: str) -> ParseResult:
     """
     Parses the tml-specific info out of a string.
 
     Args:
         string: The string to parse.
     Returns:
-        A tuple of the extracted spark service index (or None), the recommended game (or
-        None), and a list of the description comments.
+        The parsing result.
     """

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "blcm_parser.h"
 #include "blcm_preprocessor/blcm_preprocessor.h"
+#include "parse_result.h"
 #include "util.h"
 
 namespace tml {
@@ -11,9 +12,10 @@ namespace {
  * @brief Extracts the description comments from a blcmm file.
  *
  * @param doc The parsed xml document.
+ * @param output The parse result struct to add comments to.
  * @return A list of extracted comments.
  */
-std::vector<py::str> extract_description(pugi::xml_document& doc) {
+void extract_description(pugi::xml_document& doc, ParseResult& parse_result) {
     const std::string_view version = doc.select_node("/BLCMM/@v").attribute().as_string();
     if (version != "1") {
         throw blcm_preprocessor::ParserError("Unknown BLCMM file version");
@@ -24,7 +26,6 @@ std::vector<py::str> extract_description(pugi::xml_document& doc) {
         throw blcm_preprocessor::ParserError("Couldn't find root category");
     }
 
-    std::vector<py::str> comments;
     for (auto child : root) {
         const CaseInsensitiveStringView child_name = child.name();
 
@@ -35,7 +36,7 @@ std::vector<py::str> extract_description(pugi::xml_document& doc) {
                 // This comment was really holding a command, the description's over
                 break;
             }
-            comments.emplace_back(to_system_encoding_py_str(comment));
+            parse_result.add_comment(comment);
             continue;
         }
 
@@ -51,7 +52,7 @@ std::vector<py::str> extract_description(pugi::xml_document& doc) {
 
             // This is a dedicated description category
             // Discard existing comments, and get them from this category's children instead
-            comments.clear();
+            parse_result.discard_comments();
 
             for (auto grandchild : child) {
                 const std::string_view grandchild_name = grandchild.name();
@@ -60,7 +61,7 @@ std::vector<py::str> extract_description(pugi::xml_document& doc) {
                     if (is_command(comment)) {
                         break;
                     }
-                    comments.emplace_back(to_system_encoding_py_str(comment));
+                    parse_result.add_comment(comment);
                     continue;
                 }
 
@@ -72,13 +73,11 @@ std::vector<py::str> extract_description(pugi::xml_document& doc) {
         // After any non-comment, the description's over
         break;
     }
-
-    return comments;
 }
 
 }  // namespace
 
-std::pair<std::vector<py::str>, std::optional<py::str>> parse_blcmm_file(std::istream& stream) {
+void parse_blcmm_file(std::istream& stream, ParseResult& parse_result) {
     std::stringstream processed_xml{};
     blcm_preprocessor::preprocess(stream, processed_xml);
     // Move the string out of the stream
@@ -93,14 +92,12 @@ std::pair<std::vector<py::str>, std::optional<py::str>> parse_blcmm_file(std::is
     }
 
     auto game_attr = doc.select_node("/BLCMM/head/type/@name").attribute().as_string();
-    std::optional<py::str> game;
-
     // If not an empty string
     if (game_attr[0] != '\0') {
-        game = to_system_encoding_py_str(game_attr);
+        parse_result.game = to_system_encoding_py_str(game_attr);
     }
 
-    return {extract_description(doc), std::move(game)};
+    extract_description(doc, parse_result);
 }
 
 }  // namespace tml

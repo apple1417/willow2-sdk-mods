@@ -1,10 +1,9 @@
 #include "pch.h"
-#include <pybind11/cast.h>
-#include <sstream>
 #include "blcm_parser.h"
 #include "blcm_preprocessor/blcm_preprocessor.h"
 #include "filtertool_parser.h"
 #include "line_parser.h"
+#include "parse_result.h"
 #include "util.h"
 
 namespace tml {
@@ -32,9 +31,9 @@ pybind11::error_already_set file_not_found(const std::filesystem::path& filename
  * @brief Looks through an input stream for commands matching hotfix ones, and extracts the service.
  *
  * @param input The input stream to look though.
- * @return The found service index, or `std::nullopt` if unsuccessful.
+ * @param parse_result The parse result struct to extract the spark service index into.
  */
-std::optional<size_t> look_for_spark_service(std::istream& input) {
+void look_for_spark_service(std::istream& input, ParseResult& parse_result) {
     for (std::string line; std::getline(input, line);) {
         // Aproximately matching the regex:
         // /\s+set\s+Transient.SparkServiceConfiguration_\d+\s+(keys|values)/i
@@ -71,39 +70,34 @@ std::optional<size_t> look_for_spark_service(std::istream& input) {
             continue;
         }
 
-        return idx;
+        parse_result.spark_service_idx = idx;
     }
-
-    return std::nullopt;
 }
 
 /**
  * @brief Runs the file parser over the given stream.
  *
  * @param stream The stream to parse.
- * @return A python output tuple, the spark service index, game, and list of comments.
+ * @return The result of parsing the stream.
  */
-py::object parse(std::istream& stream) {
+ParseResult parse(std::istream& stream) {
     std::string line;
     std::getline(stream, line);
     stream.seekg(0);
 
-    std::vector<py::str> comments;
-    std::optional<py::str> game = std::nullopt;
+    ParseResult parse_result;
 
     if (line.starts_with("<BLCMM")) {
-        auto res = parse_blcmm_file(stream);
-
-        comments = std::move(res.first);
-        game = std::move(res.second);
+        parse_blcmm_file(stream, parse_result);
     } else if (line.starts_with("#<")) {
-        comments = std::move(parse_filtertool_file(stream));
+        parse_filtertool_file(stream, parse_result);
     } else {
-        comments = std::move(parse_file_line_by_line(stream));
+        parse_file_line_by_line(stream, parse_result);
     }
 
-    auto spark_service = look_for_spark_service(stream);
-    return py::make_tuple(spark_service, game, comments);
+    look_for_spark_service(stream, parse_result);
+
+    return parse_result;
 }
 
 }  // namespace
@@ -111,6 +105,12 @@ py::object parse(std::istream& stream) {
 PYBIND11_MODULE(file_parser, mod) {
     py::register_exception<blcm_preprocessor::ParserError>(mod, "BLCMParserError",
                                                            PyExc_RuntimeError);
+
+    py::class_<ParseResult>(mod, "ParseResult")
+        .def_readwrite("blimp_tags", &ParseResult::blimp_tags)
+        .def_readwrite("untagged_lines", &ParseResult::untagged_lines)
+        .def_readwrite("game", &ParseResult::game)
+        .def_readwrite("spark_service_idx", &ParseResult::spark_service_idx);
 
     mod.def(
         "parse",
@@ -126,8 +126,7 @@ PYBIND11_MODULE(file_parser, mod) {
         "Args:\n"
         "    file_path: The file to parse.\n"
         "Returns:\n"
-        "    A tuple of the extracted spark service index (or None), the recommended game (or\n"
-        "    None), and a list of the description comments.",
+        "    The parsing result.",
         "file_path"_a);
 
     mod.def(
@@ -141,8 +140,7 @@ PYBIND11_MODULE(file_parser, mod) {
         "Args:\n"
         "    string: The string to parse.\n"
         "Returns:\n"
-        "    A tuple of the extracted spark service index (or None), the recommended game (or\n"
-        "    None), and a list of the description comments.",
+        "    The parsing result.",
         "string"_a);
 }
 

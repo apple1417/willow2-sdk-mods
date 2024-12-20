@@ -2,6 +2,7 @@
 #define FILE_PARSER_BLCM_PARSER_H
 
 #include "pch.h"
+#include "parse_result.h"
 
 namespace tml {
 
@@ -9,9 +10,10 @@ namespace tml {
  * @brief Parses through a blcmm file stream.
  * @note Leaves the stream directly after the line with the closing `</BLCMM>` tag.
  *
- * @return A list of description comments, and the detected recommended game.
+ * @param stream The stream to read from.
+ * @param parse_result The parse result struct to extract comments and the recommended game into.
  */
-std::pair<std::vector<py::str>, std::optional<py::str>> parse_blcmm_file(std::istream& stream);
+void parse_blcmm_file(std::istream& stream, ParseResult& parse_result);
 
 }  // namespace tml
 
