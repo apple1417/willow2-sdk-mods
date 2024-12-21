@@ -19,7 +19,7 @@ def join_lines_markdown_like(lines: Iterable[str]) -> str:
     """
     Joins a list of lines similarly to how markdown does it.
 
-    Adjacent lines get space seperated, you need an entirely empty line to add a newline.
+    Adjacent lines get space separated, you need an entirely empty line to add a newline.
 
     Args:
         lines: The lines to join.
@@ -139,7 +139,7 @@ def load_mod_info(path: Path) -> ModInfo:
     if (description_list := parse_result.blimp_tags.get("@description")) is not None:
         description = join_lines_markdown_like(description_list)
     else:
-        # If there's no explict description tags, extract it from the untagged lines instead
+        # If there's no explicit description tags, extract it from the untagged lines instead
         strip_chars = find_edge_characters(parse_result.untagged_lines)
         description = join_lines_markdown_like(
             line.strip(strip_chars) for line in parse_result.untagged_lines

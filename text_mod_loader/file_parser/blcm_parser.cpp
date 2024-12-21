@@ -31,18 +31,18 @@ void extract_description(pugi::xml_document& doc, ParseResult& parse_result) {
 
         static const constexpr CaseInsensitiveStringView comment = "comment";
         if (child_name == comment) {
-            auto comment = child.child_value();
-            if (is_command(comment)) {
+            auto value = child.child_value();
+            if (is_command(value)) {
                 // This comment was really holding a command, the description's over
                 break;
             }
-            parse_result.add_comment(comment);
+            parse_result.add_comment(value);
             continue;
         }
 
         static const constexpr CaseInsensitiveStringView category = "category";
         if (child_name == category) {
-            CaseInsensitiveStringView category_name = child.attribute("name").as_string();
+            const CaseInsensitiveStringView category_name = child.attribute("name").as_string();
 
             static const constexpr CaseInsensitiveStringView description = "description";
             if (category_name.find(description) == CaseInsensitiveStringView::npos) {
@@ -56,12 +56,12 @@ void extract_description(pugi::xml_document& doc, ParseResult& parse_result) {
 
             for (auto grandchild : child) {
                 const std::string_view grandchild_name = grandchild.name();
-                if (grandchild_name == "comment") {
-                    auto comment = grandchild.child_value();
-                    if (is_command(comment)) {
+                if (grandchild_name == comment) {
+                    auto value = grandchild.child_value();
+                    if (is_command(value)) {
                         break;
                     }
-                    parse_result.add_comment(comment);
+                    parse_result.add_comment(value);
                     continue;
                 }
 

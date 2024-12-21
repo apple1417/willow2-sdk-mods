@@ -11,7 +11,7 @@ void ParseResult::discard_comments(void) {
 }
 
 void ParseResult::add_comment(const char* comment) {
-    std::string_view comment_view{comment};
+    const std::string_view comment_view{comment};
 
     if (comment_view.empty()) {
         return;

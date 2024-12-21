@@ -14,14 +14,15 @@ void parse_filtertool_file(std::istream& stream, ParseResult& parse_result) {
     for (; std::getline(stream, line);) {
         auto first_non_space =
             std::ranges::find_if_not(line, [](auto chr) { return std::isspace(chr); });
-        auto last_non_space = std::find_if_not(line.rbegin(), line.rend(),
-                                               [](auto chr) { return std::isspace(chr); });
+        auto last_non_space = std::ranges::find_if_not(std::ranges::reverse_view(line),
+                                                       [](auto chr) { return std::isspace(chr); });
 
-        std::string_view trimmed{first_non_space, last_non_space.base()};
+        const std::string_view trimmed{first_non_space, last_non_space.base()};
 
         if (trimmed.starts_with("#<") && trimmed.ends_with('>')) {
             if (!started_description_category) {
-                CaseInsensitiveStringView category_name{trimmed.begin() + 2, trimmed.end() - 1};
+                const CaseInsensitiveStringView category_name{trimmed.begin() + 2,
+                                                              trimmed.end() - 1};
 
                 static const constexpr CaseInsensitiveStringView description = "description";
                 if (category_name.find(description) != CaseInsensitiveStringView::npos) {

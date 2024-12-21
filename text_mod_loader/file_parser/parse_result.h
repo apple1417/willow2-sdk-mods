@@ -5,7 +5,17 @@
 
 namespace tml {
 
-struct ParseResult {
+// By default, pybind tries to compile with visibility hidden
+// If we have default visibility in a type holding pybind objects as members, this may cause a
+// warning, since our type has greater visibility than it's members
+// This macro sets the right visibility
+#if defined(__MINGW32__)
+#define PY_OBJECT_VISIBILITY __attribute__((visibility("hidden")))
+#else
+#define PY_OBJECT_VISIBILITY
+#endif
+
+struct PY_OBJECT_VISIBILITY ParseResult {
     // Unordered map doesn't like working with python strings, have to store tags as a python dict
     py::dict blimp_tags;
     std::vector<py::str> untagged_lines;

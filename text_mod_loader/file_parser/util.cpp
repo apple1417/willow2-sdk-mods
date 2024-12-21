@@ -60,7 +60,7 @@ bool is_command(CaseInsensitiveStringView str, bool allow_spark) {
     }
 
     auto word_end = std::find_if(non_space, str.end(), [](auto chr) { return std::isspace(chr); });
-    CaseInsensitiveStringView first_word{non_space, word_end};
+    const CaseInsensitiveStringView first_word{non_space, word_end};
     return first_word == "say" || first_word == "exec" || first_word == "set";
 }
 

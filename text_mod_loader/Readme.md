@@ -15,7 +15,7 @@ but to summarize, simply add a few tags to the first comment block at the top of
 
 Text Mod Loader supports the following tags.
 
-| Tag Name         | Multiple | Intepretation                                                                                                                                                                                              |
+| Tag Name         | Multiple | Interpretation                                                                                                                                                                                             |
 | :--------------- | :------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `@author`        | Allowed  | The mod's author(s), all joined into a list, replacing `TextModLoader`.                                                                                                                                    |
 | `@description`   | Allowed  | Joined in the order encountered to create the mod's description. A tag with an empty value (after stripping whitespace) joins surrounding values with a newline, all other pairs are joined using a space. |
@@ -51,4 +51,4 @@ Text Mod Loader supports the following tags.
 - Forced all mod info to be reloaded whenever you update TML.
 
 ## Text Mod Loader v1.0
-- Inital Release.
+- Initial Release.

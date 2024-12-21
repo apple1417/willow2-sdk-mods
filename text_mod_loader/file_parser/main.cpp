@@ -35,8 +35,8 @@ pybind11::error_already_set file_not_found(const std::filesystem::path& filename
  */
 void look_for_spark_service(std::istream& input, ParseResult& parse_result) {
     for (std::string line; std::getline(input, line);) {
-        // Aproximately matching the regex:
-        // /\s+set\s+Transient.SparkServiceConfiguration_\d+\s+(keys|values)/i
+        // Approximately matching the regex:
+        // /\s+set\s+Transient.SparkServiceConfiguration_(\d+)\s+(keys|values)/i
 
         const constexpr CaseInsensitiveStringView set = "set";
         const constexpr CaseInsensitiveStringView transient =
@@ -44,7 +44,7 @@ void look_for_spark_service(std::istream& input, ParseResult& parse_result) {
         const constexpr CaseInsensitiveStringView keys = "Keys";
         const constexpr CaseInsensitiveStringView values = "Values";
 
-        CaseInsensitiveStringView line_view{line};
+        const CaseInsensitiveStringView line_view{line};
         auto set_offset = line_view.find(set);
         if (set_offset == std::string::npos) {
             continue;

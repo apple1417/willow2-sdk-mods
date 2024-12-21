@@ -23,7 +23,7 @@ def mark_hotfixes_used() -> None:
 
 def is_hotfix_service(idx: int) -> bool:
     """
-    Checks if the given Spark Service index corosponds to the hotfix service.
+    Checks if the given Spark Service index corresponds to the hotfix service.
 
     Args:
         idx: The Spark Service index to check.
