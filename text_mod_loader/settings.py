@@ -11,8 +11,9 @@ if TYPE_CHECKING:
 
     from .text_mod import TextMod
 
+CURRENT_MOD_INFO_VERSION: int = 2
 
-# Mark this as non total just to make sure we check everything, in case someone does manual edits
+
 class ModInfo(TypedDict):
     modify_time: float
     ignore_me: bool
@@ -29,20 +30,31 @@ class ModInfo(TypedDict):
 auto_enable = HiddenOption[list[str]]("auto_enable", [])
 mod_info = HiddenOption[dict[str, dict[str, Any]]]("mod_info", {})
 
+# Default to 0 so if it's unset we always consider us to have updated
+version = HiddenOption[int]("version", 0)
+
 all_settings: tuple[BaseOption, ...] = (
     auto_enable,
     mod_info,
+    version,
 )
 
 suppress_auto_enable_update_counter: int = 0
 
 
-def sanitize_mod_paths() -> None:
+def sanitize_settings() -> None:
     """
     Sanitizes the mod file paths we're storing in settings.
 
-    Normalizes them, and removes any for mod files which no longer exist on disk.
+    Normalizes mod file paths them, and removes any for mod files which no longer exist on disk.
+    Clears cached mod info on TML updates.
     """
+
+    # If we've updated (in either direction), clear all cached mod info so we re-gather it with the
+    # current version's logic
+    if version.value != CURRENT_MOD_INFO_VERSION:
+        mod_info.value.clear()
+    version.value = CURRENT_MOD_INFO_VERSION
 
     auto_enable.value = [
         str(path.resolve())
@@ -55,7 +67,7 @@ def sanitize_mod_paths() -> None:
         if (path := Path(k)).exists() and path.is_file()
     }
 
-    # Since both settings are associated with the same mod, only need to call one
+    # Since all settings are associated with the same mod, only need to call one
     mod_info.save()
 
 

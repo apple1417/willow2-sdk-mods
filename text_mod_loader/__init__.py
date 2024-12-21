@@ -11,7 +11,7 @@ from .loader import all_text_mods, load_all_text_mods
 from .settings import (
     all_settings,
     iter_auto_enabled_paths,
-    sanitize_mod_paths,
+    sanitize_settings,
     suppress_auto_enable_updates,
 )
 
@@ -35,7 +35,7 @@ def auto_enable_hook(*_: Any) -> None:
 @ButtonOption("Reload Text Mods")
 def reload(_: ButtonOption) -> None:
     mod.load_settings()
-    sanitize_mod_paths()
+    sanitize_settings()
 
     load_all_text_mods()
 
@@ -44,6 +44,5 @@ mod = build_mod(
     cls=Library,
     options=[reload, *all_settings],
 )
-sanitize_mod_paths()
-
+sanitize_settings()
 load_all_text_mods()
