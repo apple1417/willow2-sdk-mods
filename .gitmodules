@@ -1,6 +1,6 @@
 [submodule ".willow2-mod-manager"]
 	path = .willow2-mod-manager
-	url = git@github.com:apple1417/willow2-mod-manager.git
+	url = git@github.com:bl-sdk/willow2-mod-manager.git
 [submodule ".libs/pugixml"]
 	path = .libs/pugixml
 	url = https://github.com/zeux/pugixml.git
