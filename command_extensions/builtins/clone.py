@@ -40,7 +40,6 @@ def parse_clone_target(name: str, src_class: str) -> tuple[UObject | None, str] 
     Args:
         name: The full object name to parse.
         src_class: The class of the source object. The target must use this class (or object).
-        suppress_exists: If true, doesn't log exists errors to console.
     Returns:
         A tuple of the target's outer object and it's name, or a tuple of two `None`s on error.
     """
