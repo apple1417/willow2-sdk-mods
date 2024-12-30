@@ -212,7 +212,7 @@ void handle_category(const pugi::xml_node& category,
             for (auto hotfix_child : child) {
                 handle_child_element(hotfix_child.name(), hotfix_child);
             }
-            return;
+            continue;
         }
 
         handle_child_element(child_name, child);

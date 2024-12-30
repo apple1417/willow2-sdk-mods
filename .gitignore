@@ -4,6 +4,7 @@
 # C/C++ excludes
 .cache/clangd
 .gdbinit
+.gdb_history
 .out
 
 # User scripts with templates

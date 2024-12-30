@@ -1,0 +1,12 @@
+{
+    "commands": [
+        "clone"
+    ],
+    "output": [
+        [
+            "clone",
+            "clone -x GD_Itempools.DropWeights.NumPlayersPlusOne GD_Itempools.DropWeights.DropChanceLevelBased",
+            5
+        ]
+    ]
+}
