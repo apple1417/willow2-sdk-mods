@@ -24,6 +24,8 @@ extend-exclude = [
     "TextModLoader",
     "TrueDamageLogger",
     "UserFeedback",
+
+    "command_extensions/file_parser_tests/*.test_in",
 ]
 
 [default]
