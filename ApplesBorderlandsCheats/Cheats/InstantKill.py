@@ -54,19 +54,15 @@ class KillAll(ABCCheat):
 
     def OnPress(self) -> None:
         player_pawn = unrealsdk.GetEngine().GamePlayers[0].Actor.Pawn
-        game = unrealsdk.FindAll("WillowCoopGameInfo")[-1]
-
-        player_pools = []
-        # Unintuitively, `unrealsdk.GetEngine().GamePlayers` does not hold remote players
-        for pawn in unrealsdk.FindAll("WillowPlayerPawn"):
-            if pawn.HealthPool.Data is not None:
-                player_pools.append(pawn.HealthPool.Data)
-
-        for pool in unrealsdk.FindAll("HealthResourcePool"):
-            if pool in player_pools:
-                continue
-            if pool.AssociatedProvider is None or pool.AssociatedProvider.Pawn is None:
-                continue
-            if game.IsFriendlyFire(pool.AssociatedProvider.Pawn, player_pawn):
-                continue
-            pool.CurrentValue = 0
+        # The current WorldInfo object keeps a linked list of all extant pawns:
+        pawn = unrealsdk.GetEngine().GetCurrentWorldInfo().PawnList
+        while pawn is not None:
+            # A WillowPawn's "enemy status" is determined by the GetOpinion method:
+            if pawn.GetOpinion and pawn.GetOpinion(player_pawn) != 2: #OPINION_Friendly
+                # Necessary to prevente infinite loops with parent/children:
+                if pawn.MyWillowMind:
+                    pawn.MyWillowMind.SpawnParent = None
+                    pawn.MyWillowMind.SpawnChildren = ()
+                pawn.SpawnParent = None
+                pawn.Died(None, None, ())
+            pawn = pawn.NextPawn    
