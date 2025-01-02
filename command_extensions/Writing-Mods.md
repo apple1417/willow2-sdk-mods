@@ -11,8 +11,7 @@
   - [`exec_raw`](#exec_raw)
   - [`keep_alive`](#keep_alive)
   - [`load_package`](#load_package)
-  - [`py` and `pyexec`](#py-and-pyexec)
-  - [`pyb`](#pyb)
+  - [`py|`](#py)
   - [`regen_balance`](#regen_balance)
   - [`set_early`](#set_early)
   - [`suppress_next_chat`](#suppress_next_chat)
@@ -192,18 +191,11 @@ preferred.
 | `-h, --help`       | show this help message and exit                                              |
 | `--list`           | List all packages matching the given pattern, instead of trying to load any. |
 
-## `py` and `pyexec`
-Command Extensions also adds support for using the sdk's `py` and `pyexec` commands in mod files.
-
-`py` commands have a few slight semantic differences. Their globals are not shared with those in
-console, and they're reset on executing a new file. The heredoc-like syntax is also *NOT* supported,
-use `pyb` commands instead.
-
-## `pyb`
-usage: `pyb [-h] [-x] [-d] [-p] ...`
+## `py|`
+usage: `py| [-h] [-x] [-d] [-p] ...`
 
 Runs a block of python statements, which may span multiple lines. Only one
-space after the command is consumed for arg parsing - `pyb[3*space]abc`
+space after the command is consumed for arg parsing - `py|[3*space]abc`
 extracts the line `[2*space]abc`.
 
 | positional arguments |                                       |

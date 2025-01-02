@@ -19,6 +19,16 @@ enabled (and won't suddenly re-enable soon).
 
 ## Changelog
 
+### Command Extensions v3
+- Changed the `py`, `pyexec`, and `pyb` commands back to run closer to how they did in v1.9,
+  including running them under legacy mod compatibility.
+  
+  These commands should now be considered deprecated, they will automatically be disabled when
+  legacy mod compatibility is.
+
+- Added the new `py|` command, which is exactly equivalent to `pyb`, but runs *without* legacy mod
+  compatibility.
+
 ### Command Extensions v2
 - Complete rewrite for v3 sdk.
 - Added the `CE_NewCmd` command, for use in mod files that attempt to register their own commands.

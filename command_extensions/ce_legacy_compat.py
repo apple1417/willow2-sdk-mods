@@ -7,7 +7,7 @@ from typing import Any
 from mods_base import AbstractCommand, command
 
 from . import autoregister
-from . import legacy_compat_builtins as builtins
+from . import ce_legacy_compat_builtins as builtins
 
 __all__: tuple[str, ...] = (
     "RegisterConsoleCommand",

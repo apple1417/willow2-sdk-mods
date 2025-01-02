@@ -1,6 +1,6 @@
 [project]
 name = "command_extensions"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds a few new console commands, and provides functionality for other mods to do the same.

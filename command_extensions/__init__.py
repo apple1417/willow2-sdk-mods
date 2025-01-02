@@ -10,8 +10,6 @@ from functools import wraps
 from pathlib import Path
 from typing import Any, overload
 
-import unrealsdk
-from legacy_compat import add_compat_module
 from mods_base import AbstractCommand, Library, Mod, build_mod, command, hook
 from unrealsdk import logging
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
@@ -23,11 +21,19 @@ from .builtins.clone_bpd import clone_bpd
 from .builtins.exec_raw import exec_raw
 from .builtins.keep_alive import keep_alive
 from .builtins.load_package import load_package
-from .builtins.pyb import pyb
+from .builtins.pyb import legacy_pyb, new_pyb
 from .builtins.regen_balance import regen_balance
 from .builtins.set_early import set_early
 from .builtins.suppress_chat import server_say_hook, suppress_next_chat
 from .builtins.unlock_package import unlock_package
+
+try:
+    import legacy_compat
+
+    if not legacy_compat.ENABLED:
+        legacy_compat = None
+except ImportError:
+    legacy_compat = None
 
 # region Public Interface
 
@@ -142,12 +148,14 @@ def autoregister(obj: AbstractCommand | Mod, /) -> AbstractCommand | Mod:
 
 
 EXEC_ROOT = Path(sys.executable).parent.parent
-PYEXEC_ROOT = Path(unrealsdk.config.get("pyunrealsdk", {}).get("pyexec_root", ""))
 
-# To match pyunrealsdk, consecutive py commands reuse the same globals
-# We choose to clear them for each new exec command however
-DEFAULT_PY_GLOBALS: dict[str, Any] = {"unrealsdk": unrealsdk}
-py_globals: dict[str, Any] = dict(DEFAULT_PY_GLOBALS)
+if legacy_compat is not None:
+    from .builtins.pyb import legacy_py_globals
+
+    # reassigning this somehow prevents it hinting as possibly unbound
+    pyexec_globals = legacy_py_globals
+
+    PYEXEC_ROOT = Path(sys.executable).parent
 
 # If the commands map has changed since we last ran a file, it's dirty, and we'll need to update the
 # file parser's commands before executing the next one
@@ -157,7 +165,28 @@ command_map: dict[str, AbstractCommand] = {}
 debug_logging: bool = False
 
 
+def update_dirty_commands() -> None:
+    """Checks if the command list is dirty, and if so updates it."""
+    global commands_dirty
+    if not commands_dirty:
+        return
+
+    command_list = list(command_map)
+    command_list.append("exec")
+    if legacy_compat is not None:
+        command_list += ["py", "pyexec"]
+
+    file_parser.update_commands(command_list)
+    commands_dirty = False
+
+
 def parse_exec_command(file_name: str) -> None:
+    """
+    Parse an exec command's filename, and execute it.
+
+    Args:
+        file_name: The filename to parse.
+    """
     file_name = file_name.strip()
 
     if file_name[0] in "'\"" and file_name[0] == file_name[-1]:
@@ -170,12 +199,13 @@ def parse_exec_command(file_name: str) -> None:
 
 
 def execute_file(file_path: Path) -> None:
-    global commands_dirty
-    if commands_dirty:
-        command_list = list(command_map)
-        command_list += ["exec", "py", "pyexec"]
-        file_parser.update_commands(command_list)
-        commands_dirty = False
+    """
+    Executes a mod file.
+
+    Args:
+        file_path: The path to execute.
+    """
+    update_dirty_commands()
 
     for cmd, line, cmd_len in file_parser.parse(file_path):
         if debug_logging:
@@ -186,24 +216,31 @@ def execute_file(file_path: Path) -> None:
             case "exec":
                 parse_exec_command(line[cmd_len:])
 
-            case "py":
+            case "py" if legacy_compat is not None:
                 try:
-                    exec(line[cmd_len:].lstrip(), py_globals)  # noqa: S102
+                    with legacy_compat.legacy_compat():
+                        exec(line[cmd_len:].lstrip(), pyexec_globals)  # noqa: S102
                 except Exception:  # noqa: BLE001
                     logging.error("Error occurred during 'py' command:")
                     logging.error(line)
                     traceback.print_exc()
 
-            case "pyexec":
+            case "pyexec" if legacy_compat is not None:
                 try:
                     path = PYEXEC_ROOT / line[cmd_len:].strip()
-                    with path.open() as file:
+                    with path.open() as file, legacy_compat.legacy_compat():
                         # To match pyunrealsdk, each pyexec gets a new empty of globals
-                        exec(file.read(), {"__file__": str(path)})  # noqa: S102
+                        exec(file.read(), pyexec_globals)  # noqa: S102
                 except Exception:  # noqa: BLE001
                     logging.error("Error occurred during 'pyexec' command:")
                     logging.error(line)
                     traceback.print_exc()
+
+            case "py" | "pyexec" if legacy_compat is None:
+                logging.error(
+                    f"The '{name}' command has been disabled inside mod files due to legacy mod"
+                    f" compatibility being disabled.",
+                )
 
             case _:
                 if name in command_map:
@@ -229,10 +266,6 @@ def exec_command_hook(
         return
 
     parse_exec_command(file_name)
-
-    # Reset the py command's globals between files
-    py_globals.clear()
-    py_globals.update(DEFAULT_PY_GLOBALS)
 
 
 @command(
@@ -304,11 +337,12 @@ ce_newcmd.add_argument("cmd", help="The command being registered. May not contai
 # endregion
 # ==================================================================================================
 
-# Avoid circular import
-from . import legacy_compat, legacy_compat_builtins  # noqa: E402
+# Down here to avoid a circular import
+if legacy_compat is not None:
+    from . import ce_legacy_compat, ce_legacy_compat_builtins
 
-add_compat_module("Mods.CommandExtensions", legacy_compat)
-add_compat_module("Mods.CommandExtensions.builtins", legacy_compat_builtins)
+    legacy_compat.add_compat_module("Mods.CommandExtensions", ce_legacy_compat)
+    legacy_compat.add_compat_module("Mods.CommandExtensions.builtins", ce_legacy_compat_builtins)
 
 mod = build_mod(
     cls=Library,
@@ -322,8 +356,9 @@ mod = build_mod(
         clone,
         exec_raw,
         keep_alive,
+        legacy_pyb,
         load_package,
-        pyb,
+        new_pyb,
         regen_balance,
         set_early,
         suppress_next_chat,
