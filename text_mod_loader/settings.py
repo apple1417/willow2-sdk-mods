@@ -125,9 +125,6 @@ def get_cached_mod_info(path: Path) -> ModInfo | None:
     if (raw_dict := mod_info.value.get(str(path.resolve()))) is None:
         return None
 
-    # This is the only one we need to convert types on
-    raw_dict["recommended_game"] = Game.__members__.get(raw_dict["recommended_game"])
-
     # Set some sane defaults.
     # Not going to bother with more in depth sanity checking since it's really your fault if you're
     # messing the settings manually
@@ -141,6 +138,9 @@ def get_cached_mod_info(path: Path) -> ModInfo | None:
         "version": "",
         "description": "",
     } | raw_dict  # type: ignore
+
+    if isinstance(cached_info["recommended_game"], str):
+        cached_info["recommended_game"] = Game.__members__.get(cached_info["recommended_game"])
 
     # If the file has been modified since we cached it, we can't trust our info
     if path.stat().st_mtime > cached_info["modify_time"]:

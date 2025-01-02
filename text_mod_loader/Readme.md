@@ -27,6 +27,9 @@ Text Mod Loader supports the following tags.
 
 # Changelog
 
+## Text Mod Loader v3
+- Fixed that the settings file would corrupt every other launch, losing your auto enable settings.
+
 ## Text Mod Loader v2
 - Complete rewrite for v3 sdk.
 - Removed `add_custom_mod_path`, which was never used. The original intent was mostly so that you
