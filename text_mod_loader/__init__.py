@@ -5,8 +5,10 @@ if True:
 
 from typing import Any
 
+from legacy_compat import add_compat_module
 from mods_base import ButtonOption, Library, build_mod, hook
 
+from . import legacy_compat as tml_legacy_compat
 from .loader import all_text_mods, load_all_text_mods
 from .settings import (
     all_settings,
@@ -46,3 +48,5 @@ mod = build_mod(
 )
 sanitize_settings()
 load_all_text_mods()
+
+add_compat_module("Mods.TextModLoader", tml_legacy_compat)

@@ -1,6 +1,6 @@
 [project]
 name = "text_mod_loader"
-version = "3"
+version = "4"
 authors = [{ name = "apple1417" }]
 description = """\
 Displays Text Mods from binaries in the SDK mods menu.

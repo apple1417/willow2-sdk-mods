@@ -27,6 +27,9 @@ Text Mod Loader supports the following tags.
 
 # Changelog
 
+## Text Mod Loader v4
+- Added legacy compat for Arcania, which it turns out did actually use `add_custom_mod_path`.
+
 ## Text Mod Loader v3
 - Fixed that the settings file would corrupt every other launch, losing your auto enable settings.
 

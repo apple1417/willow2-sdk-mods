@@ -165,6 +165,9 @@ def load_all_text_mods() -> None:
     for mod in list(all_text_mods.values()):
         mod.check_deleted()
 
+        if mod.prevent_reloading:
+            continue
+
         match mod.state:
             # Delete what mods we can
             case (

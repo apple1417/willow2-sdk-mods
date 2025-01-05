@@ -1,19 +1,19 @@
 from __future__ import annotations
 
+import os
+import sys
 from dataclasses import KW_ONLY, dataclass
-from typing import TYPE_CHECKING, Literal
+from pathlib import Path
+from typing import Literal
 
 from mods_base import Game, Mod, get_pc
-
-from .anti_circular_import import TextModState
-
-if TYPE_CHECKING:
-    from pathlib import Path
-
 from ui_utils import TrainingBox
 
+from .anti_circular_import import TextModState
 from .hotfixes import any_hotfix_used, is_hotfix_service
 from .settings import change_mod_auto_enable
+
+BINARIES_DIR = Path(sys.executable).parent.parent
 
 
 @dataclass
@@ -24,6 +24,7 @@ class TextMod(Mod):
 
     file: Path
     state: TextModState = TextModState.Disabled
+    prevent_reloading: bool = False
 
     spark_service_idx: int | None
     recommended_game: Game | None
@@ -127,7 +128,10 @@ class TextMod(Mod):
                 return
 
             case TextModState.Disabled:
-                get_pc().ConsoleCommand(f'exec "{self.file}"')
+                # Path.relative_to requires one path be a subpath of the other, it won't prefix
+                # `../`s if we're executing something in a parent dir of binaries
+                get_pc().ConsoleCommand(f'exec "{os.path.relpath(self.file, BINARIES_DIR)}"')
+
                 self.state = TextModState.Enabled
                 change_mod_auto_enable(self, True)
             case TextModState.DisableOnRestart:
