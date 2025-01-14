@@ -181,9 +181,7 @@ class TextMod(Mod):
 
         match self.state:
             case (
-                TextModState.Disabled
-                | TextModState.LockedHotfixes
-                | TextModState.LockedBadService
+                TextModState.Disabled | TextModState.LockedHotfixes | TextModState.LockedBadService
             ):
                 self.state = TextModState.DeletedInactive
             case TextModState.DisableOnRestart | TextModState.Enabled:
