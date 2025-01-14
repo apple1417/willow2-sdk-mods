@@ -22,13 +22,14 @@ from Mods.ModMenu import EnabledSaveType, Game, Hook, Mods, ModTypes, RegisterMo
 
 try:
     from Mods.Enums import (EChangeStatus, ECurrencyType, EInteractionIcons, ENetRole, EShopType,
-                            ETransactionStatus, EUsabilityType, PlayerMark)
+                            ESkillEventType, ETransactionStatus, EUsabilityType, PlayerMark)
 except ImportError:
     import webbrowser
     webbrowser.open("https://bl-sdk.github.io/requirements/?mod=Alt%20Use%20Vendors&all")
     raise ImportError("Alt Use Vendors requires at least Enums version 1.0")
 
 
+Actor: TypeAlias = unrealsdk.UObject
 AkEvent: TypeAlias = unrealsdk.UObject
 AmmoResourcePool: TypeAlias = unrealsdk.UObject
 InteractionIconDefinition: TypeAlias = unrealsdk.UObject
@@ -111,14 +112,14 @@ AKE_INTERACT_BY_VENDOR_NAME: Dict[str, str] = {
 # truely expensive load package, so we'll just cache them (and keep alive) as we use them
 akevent_cache: Dict[str, AkEvent] = {}
 
-def find_and_play_akevent(PC: WillowPlayerController, event_name: str) -> None:
+def find_and_play_akevent(actor: Actor, event_name: str) -> None:
     """
     Attempts to find and play an AkEvent.
 
     Silently drops it on failure.
 
     Args:
-        PC: The player controller to play at.
+        actor: The actor to play at.
         event_name: The object name of the event to play.
     """
 
@@ -130,7 +131,19 @@ def find_and_play_akevent(PC: WillowPlayerController, event_name: str) -> None:
         unrealsdk.KeepAlive(event)
         akevent_cache[event_name] = event
 
-    PC.Pawn.PlayAkEvent(event)
+    actor.PlayAkEvent(event)
+
+
+def trigger_money_is_power(PC: WillowPlayerController) -> None:
+    """
+    If the Game is TPS, triggers the removal of the Doppelganger's Money is Power stacks.
+
+    Args:
+        PC: The player controller that has spent money.
+    """
+    if Game.GetCurrent() is not Game.TPS:
+        return
+    PC.GetSkillManager().NotifySkillEvent(ESkillEventType.SEVT_OnPaidCashForUse, PC, PC, None, None)
 
 
 def get_trash_value(PC: WillowPlayerController, vendor: WillowVendingMachine) -> int:
@@ -438,6 +451,7 @@ class AltUseVendors(SDKMod):
         if info.requires_manual_payment:
             caller.PlayerReplicationInfo.AddCurrencyOnHand(ECurrencyType.CURRENCY_Credits, -cost)
             caller.SetPendingTransactionStatus(ETransactionStatus.TS_TransactionComplete)
+            trigger_money_is_power(caller)
 
         info.purchase_function(caller, vendor)
 
@@ -446,7 +460,7 @@ class AltUseVendors(SDKMod):
         if interact_event is None:
             unrealsdk.Log(f"[Alt Use Vendors] Couldn't find interact voice line for {vendor_name}")
         else:
-            find_and_play_akevent(caller, interact_event)
+            find_and_play_akevent(vendor, interact_event)
 
         self.update_vendor_costs(caller, vendor.ShopType)
 
@@ -523,6 +537,8 @@ class AltUseVendors(SDKMod):
          function. Not perfect if stuff gets modded too much, but doesn't need to be since this cost
          doesn't really matter.
         """
+        if params.ProjectileDefinition.Resource is None:
+            return True
         if params.ProjectileDefinition.Resource.Name != GRENADE_RESOURCE_NAME:
             return True
 
