@@ -1,5 +1,12 @@
 # Changelog
 
+## Alt Use Vendors v2.3
+Thanks to @Siggless
+
+- Spending money triggers the removal of the Doppelganger's Money is Power stacks.
+- Voicelines play from the vendor instead of the player.
+- Prevent null object error on deploying Axton's turret.
+
 ## Alt Use Vendors v2.2
 - Added sound effects and voicelines, thanks to @Siggless
 

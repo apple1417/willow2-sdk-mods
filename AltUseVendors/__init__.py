@@ -335,7 +335,7 @@ class AltUseVendors(SDKMod):
     Description: str = (
         "Adds alt use binds to vendors, like in BL3/Wonderlands."
     )
-    Version: str = "2.2"
+    Version: str = "2.3"
 
     Types: ModTypes = ModTypes.Utility
     SaveEnabledState: EnabledSaveType = EnabledSaveType.LoadWithSettings
