@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import unrealsdk
@@ -55,7 +55,7 @@ any_movie_active = False
 # We can't quite set the vendor contents at the moment we create the movie, need to wait a little
 # past the end of the function call. These vars hold the contents while waiting on the hook - we
 # invalidate them right after
-pending_items: list[WillowInventory] | None = None
+pending_items: Sequence[WillowInventory] | None = None
 pending_iotd: WillowInventory | None = None
 
 # The callbacks we keep around for the full lifespan of the movie
@@ -65,7 +65,7 @@ on_cancel_callback: Callable[[], None] | None = None
 
 def show(
     *,
-    items: list[WillowInventory],
+    items: Sequence[WillowInventory],
     iotd: WillowInventory | None = None,
     on_purchase: Callable[[WillowInventory], None] | None = None,
     on_cancel: Callable[[], None] | None = None,
