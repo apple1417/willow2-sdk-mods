@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 import unrealsdk
@@ -48,39 +49,59 @@ except ValueError:
 # we can throw
 any_movie_active = False
 
+# This means we keep a few params in global scope. Since it's a singleton, didn't really feel right
+# using a class like in ui_utils
+
 # We can't quite set the vendor contents at the moment we create the movie, need to wait a little
 # past the end of the function call. These vars hold the contents while waiting on the hook - we
 # invalidate them right after
 pending_items: list[WillowInventory] | None = None
 pending_iotd: WillowInventory | None = None
 
+# The callbacks we keep around for the full lifespan of the movie
+on_purchase_callback: Callable[[WillowInventory], None] | None = None
+on_cancel_callback: Callable[[], None] | None = None
 
-def show(items: list[WillowInventory], iotd: WillowInventory | None = None) -> None:
+
+def show(
+    *,
+    items: list[WillowInventory],
+    iotd: WillowInventory | None = None,
+    on_purchase: Callable[[WillowInventory], None] | None = None,
+    on_cancel: Callable[[], None] | None = None,
+) -> None:
     """
     Shows the vendor movie.
 
     Args:
-        items: The list of item to show.
+        items: The list of items to show.
         iotd: The item of the day, or None.
+        on_purchase: A callback run when one of the items is purchased.
+        on_cancel: A callback run when the menu is quit out of without purchasing anything.
     """
-    global any_movie_active, pending_items, pending_iotd
+    global any_movie_active, pending_items, pending_iotd, on_purchase_callback, on_cancel_callback
     if any_movie_active:
         raise RuntimeError("cannot show two vendor movies at once")
     any_movie_active = True
 
     pending_items = items
     pending_iotd = iotd
+    on_purchase_callback = on_purchase
+    on_cancel_callback = on_cancel
 
     _on_start.enable()
     _init_iotd.enable()
     _refresh_left_panel.enable()
+    _force_never_sell.enable()
     _block_refresh_timer.enable()
     _block_transient_refresh.enable()
     _refresh.enable()
+    _on_purchase.enable()
     _on_close.enable()
 
     movie = get_pc().GFxUIManager.PlayMovie(_get_gfx_def())
 
+    movie.BlackMarketTitle = "EDIT"
     movie.StoragePanelLabel = "EDIT"
     movie.ItemOfTheDayLabel_BlackMarket = "Original Item"
     movie.VisitLabel_BlackMarket = ""
@@ -156,7 +177,7 @@ def _init_iotd(
     iotd = obj.ItemOfTheDayData
     iotd.Item = pending_iotd
     iotd.Price = 0
-    iotd.ItemStatus = EShopItemStatus.SIS_InvalidItem
+    iotd.ItemStatus = EShopItemStatus.SIS_ItemCanBePurchased
 
     iotd_panel.SetItemOfTheDayItem(pending_iotd)
 
@@ -198,7 +219,7 @@ def _refresh_left_panel(
                 "ShopItemData",
                 Item=item,
                 Price=0,
-                ItemStatus=EShopItemStatus.SIS_InvalidItem,
+                ItemStatus=EShopItemStatus.SIS_ItemCanBePurchased,
             )
             for item in pending_items
         ]
@@ -215,6 +236,13 @@ def _refresh_left_panel(
     obj.bLeftPanelRefreshed = True
 
     return Block
+
+
+# We'll be filling the vendor with items technically owned by the player. Force these to be shown as
+# buyables, instead of sellables
+@hook("WillowGame.VendingMachineExGFxMovie:IsCurrentSelectionSell")
+def _force_never_sell(*_: Any) -> tuple[type[Block], bool]:
+    return Block, False
 
 
 # The menu normally sets up a timer to constantly refresh its contents, in case the vending
@@ -255,16 +283,52 @@ def _refresh(
     return Block
 
 
+# Purchasing something normally goes though `ConditionalStartTransfer`, which is a big complex
+# function that'd be annoying to hook. Luckily for us, on a successful purchase it schedules a timer
+# to call this function 0.1s later - which is actually perfect since it gives a bit of time for the
+# animation/sound effect before we close the menu.
+@hook("WillowGame.VendingMachineExGFxMovie:CheckShopOpStatus")
+def _on_purchase(
+    obj: UObject,
+    _args: WrappedStruct,
+    _ret: Any,
+    _func: BoundFunction,
+) -> None:
+    # Since we don't have a real vendor hooked up, purchasing doesn't actually do anything, it's
+    # still the currently selected item
+    selection = obj.CurrentSelectionItem
+    if selection is None:
+        return
+
+    global on_cancel_callback, on_purchase_callback
+    on_purchase = on_purchase_callback
+
+    on_purchase_callback = None
+    on_cancel_callback = None
+
+    obj.Close()
+
+    if on_purchase is not None:
+        on_purchase(selection)
+
+
 @hook("WillowGame.VendingMachineExGFxMovie:OnClose", Type.POST)
 def _on_close(*_: Any) -> None:
     # Make sure all the hooks are off when we finally close the movie
     _on_start.disable()
     _init_iotd.disable()
     _refresh_left_panel.disable()
+    _force_never_sell.disable()
     _block_refresh_timer.disable()
     _block_transient_refresh.disable()
     _refresh.disable()
+    _on_purchase.disable()
     _on_close.disable()
 
-    global any_movie_active
+    global any_movie_active, on_purchase_callback, on_cancel_callback
     any_movie_active = False
+
+    if on_cancel_callback is not None:
+        on_cancel_callback()
+    on_purchase_callback = None
+    on_cancel_callback = None
