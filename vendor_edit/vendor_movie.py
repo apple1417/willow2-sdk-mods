@@ -1,0 +1,270 @@
+from typing import TYPE_CHECKING, Any
+
+import unrealsdk
+from mods_base import get_pc, hook
+from unrealsdk.hooks import Block, Type
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from enum import auto
+
+    from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
+
+    class EShopItemStatus(UnrealEnum):
+        SIS_ItemCanBePurchased = auto()
+        SIS_NotEnoughRoomForItem = auto()
+        SIS_PlayerCannotAffordItem = auto()
+        SIS_PlayerCannotUseItem = auto()
+        SIS_InvalidItem = auto()
+        SIS_MAX = auto()
+
+    class EShopType(UnrealEnum):
+        SType_Weapons = auto()
+        SType_Items = auto()
+        SType_Health = auto()
+        SType_BlackMarket = auto()
+        SType_MAX = auto()
+
+else:
+    EShopItemStatus = unrealsdk.find_enum("EShopItemStatus")
+    EShopType = unrealsdk.find_enum("EShopType")
+
+type WillowInventory = UObject
+type VendingMachineExGFxDefinition = UObject
+
+__all__: tuple[str, ...] = ("show",)
+
+
+vendor_gfx_def: VendingMachineExGFxDefinition | None
+try:
+    vendor_gfx_def = unrealsdk.find_object(
+        "VendingMachineExGFxDefinition",
+        "UI_VendingMachine.vendor_edit_def",
+    )
+except ValueError:
+    vendor_gfx_def = None
+
+# This is all designed around the assumption only one vendor movie's open at a time, keep track so
+# we can throw
+any_movie_active = False
+
+# We can't quite set the vendor contents at the moment we create the movie, need to wait a little
+# past the end of the function call. These vars hold the contents while waiting on the hook - we
+# invalidate them right after
+pending_items: list[WillowInventory] | None = None
+pending_iotd: WillowInventory | None = None
+
+
+def show(items: list[WillowInventory], iotd: WillowInventory | None = None) -> None:
+    """
+    Shows the vendor movie.
+
+    Args:
+        items: The list of item to show.
+        iotd: The item of the day, or None.
+    """
+    global any_movie_active, pending_items, pending_iotd
+    if any_movie_active:
+        raise RuntimeError("cannot show two vendor movies at once")
+    any_movie_active = True
+
+    pending_items = items
+    pending_iotd = iotd
+
+    _on_start.enable()
+    _init_iotd.enable()
+    _refresh_left_panel.enable()
+    _block_refresh_timer.enable()
+    _block_transient_refresh.enable()
+    _refresh.enable()
+    _on_close.enable()
+
+    movie = get_pc().GFxUIManager.PlayMovie(_get_gfx_def())
+
+    movie.StoragePanelLabel = "EDIT"
+    movie.ItemOfTheDayLabel_BlackMarket = "Original Item"
+    movie.VisitLabel_BlackMarket = ""
+
+
+def _get_gfx_def() -> VendingMachineExGFxDefinition:
+    """
+    Gets the vendor gfx movie definition to use, constructing it if required.
+
+    Returns:
+        The vendor gfx movie definition.
+    """
+    global vendor_gfx_def
+    if vendor_gfx_def is None:
+        # TODO: other games
+        unrealsdk.load_package("Sanctuary_P")
+        unrealsdk.load_package("Sanctuary_Dynamic")
+
+        black_market = unrealsdk.find_object(
+            "VendingMachineExGFxDefinition",
+            "UI_VendingMachine.VendingMachineDef_BlackMarket",
+        )
+        vendor_gfx_def = unrealsdk.construct_object(
+            black_market.Class,
+            black_market.Outer,
+            "vendor_edit_def",
+            0x4000,
+            black_market,
+        )
+        vendor_gfx_def.bCustomStoragePanelTint = True
+        vendor_gfx_def.bShouldAllowCompare = True
+        vendor_gfx_def.bShouldShowAmmoPanel = False
+
+        tint = vendor_gfx_def.CustomStoragePanelTint
+        tint.R = 255
+        tint.G = 255
+        tint.B = 0
+        tint.A = 100
+
+    return vendor_gfx_def
+
+
+@hook("WillowGame.VendingMachineExGFxMovie:Start", Type.POST)
+def _on_start(
+    obj: UObject,
+    _args: WrappedStruct,
+    _ret: Any,
+    _func: BoundFunction,
+) -> None:
+    _on_start.disable()
+    # Force the shop type back to black market after regular initialization
+    obj.ShopType = EShopType.SType_BlackMarket
+
+
+@hook("WillowGame.VendingMachineExGFxMovie:extInitItemOfTheDayPanel")
+def _init_iotd(
+    obj: UObject,
+    args: WrappedStruct,
+    _ret: Any,
+    _func: BoundFunction,
+) -> type[Block]:
+    _init_iotd.disable()
+
+    iotd_panel = obj.GetVariableObject(
+        args.ItemOfTheDayPanelPath,
+        unrealsdk.find_class("ItemOfTheDayPanelGFxObject"),
+    )
+    obj.ItemOfTheDayPanel = iotd_panel
+    iotd_panel.Init(obj)
+
+    global pending_iotd
+
+    iotd = obj.ItemOfTheDayData
+    iotd.Item = pending_iotd
+    iotd.Price = 0
+    iotd.ItemStatus = EShopItemStatus.SIS_InvalidItem
+
+    iotd_panel.SetItemOfTheDayItem(pending_iotd)
+
+    obj.ConfigureForType_IOTD()
+
+    pending_iotd = None
+    return Block
+
+
+@hook("WillowGame.TwoPanelInterfaceGFxObject:RefreshLeftPanel")
+def _refresh_left_panel(
+    obj: UObject,
+    _args: WrappedStruct,
+    _ret: Any,
+    _func: BoundFunction,
+) -> type[Block]:
+    # This is called any time you return to the vendor after comparing, so need to keep it
+    # active the whole time
+
+    vendor_movie = obj.TwoPanelInterface
+    storage_panel = obj.StoragePanel
+
+    _, config = vendor_movie.GetSortConfigDataForPanel(
+        storage_panel,
+        unrealsdk.make_struct("SortFilterConfiguration"),
+    )
+
+    current_index = storage_panel.CurrentSelectedIndex
+
+    global pending_items
+    if pending_items is not None:
+        # Adding the items to the storage panel list is what actually gets them to show up, but they
+        # get cleared from time to time
+        storage_panel.SetList(pending_items, config, 0)
+
+        # So also keep a backup reference to each item in the vendor movie, to keep them all alive
+        vendor_movie.ShopItems = [
+            unrealsdk.make_struct(
+                "ShopItemData",
+                Item=item,
+                Price=0,
+                ItemStatus=EShopItemStatus.SIS_InvalidItem,
+            )
+            for item in pending_items
+        ]
+
+        pending_items = None
+    else:
+        # Restore from our backup list
+        storage_panel.SetList([x.Item for x in vendor_movie.ShopItems], config, 0)
+
+    # This has to be a setattr to avoid name mangling
+    storage_panel.__OnListSort__Delegate = obj.OnListSort
+    storage_panel.CurrentSelectedIndex = current_index
+    storage_panel.FixupSelectedIndex()
+    obj.bLeftPanelRefreshed = True
+
+    return Block
+
+
+# The menu normally sets up a timer to constantly refresh its contents, in case the vending
+# machine cycled. We try block all this best we can, so the items we set on init are the ones
+# which stay there
+
+
+@hook("WillowGame.VendingMachineExGFxMovie:SetVendingMachineRefreshTimer")
+def _block_refresh_timer(*_: Any) -> type[Block]:
+    _block_refresh_timer.disable()
+    return Block
+
+
+# Block any stray calls
+@hook("WillowGame.VendingMachineExGFxMovie:RefreshTransientData")
+def _block_transient_refresh(*_: Any) -> type[Block]:
+    return Block
+
+
+# This one is called for regular refreshes, e.g. when finishing comparing, so we do need to do some
+# things, but don't overwrite the item lists like the default one does
+@hook("WillowGame.VendingMachineExGFxMovie:Refresh")
+def _refresh(
+    obj: UObject,
+    _args: WrappedStruct,
+    _ret: Any,
+    _func: BoundFunction,
+) -> type[Block]:
+    two_panel = obj.TwoPanelInterface
+    two_panel.Refresh()
+
+    if two_panel.bOnLeftPanel and obj.bOnItemOfTheDay:
+        obj.SwitchToItemOfTheDay()
+
+    obj.SetCreditsDisplay()
+    obj.EvaluateCurrentSelection()
+
+    return Block
+
+
+@hook("WillowGame.VendingMachineExGFxMovie:OnClose", Type.POST)
+def _on_close(*_: Any) -> None:
+    # Make sure all the hooks are off when we finally close the movie
+    _on_start.disable()
+    _init_iotd.disable()
+    _refresh_left_panel.disable()
+    _block_refresh_timer.disable()
+    _block_transient_refresh.disable()
+    _refresh.disable()
+    _on_close.disable()
+
+    global any_movie_active
+    any_movie_active = False
