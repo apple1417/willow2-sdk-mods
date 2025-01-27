@@ -113,7 +113,7 @@ def show(
 
     movie.BlackMarketTitle = "EDIT"
     movie.StoragePanelLabel = "EDIT"
-    movie.ItemOfTheDayLabel_BlackMarket = "Original Item"
+    movie.ItemOfTheDayLabel_BlackMarket = "No Change"
     movie.VisitLabel_BlackMarket = ""
 
 
@@ -317,13 +317,18 @@ def _on_purchase(
 
     global on_cancel_callback, on_purchase_callback
     on_purchase = on_purchase_callback
+    on_cancel = on_cancel_callback
 
     on_purchase_callback = None
     on_cancel_callback = None
 
     obj.Close()
 
-    if on_purchase is not None:
+    # If you purchased the original item, treat it as a cancel
+    if selection == obj.ItemOfTheDayData.Item:
+        if on_cancel is not None:
+            on_cancel()
+    elif on_purchase is not None:
         on_purchase(selection)
 
 

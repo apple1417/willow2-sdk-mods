@@ -224,6 +224,12 @@ class WeaponReplacements(AbstractReplacementList):
             new_def = copy(def_data)
             setattr(new_def, slot_names.def_data, part)
 
-            new_weapons.append(weapon.CreateWeaponFromDef(new_def, weapon.Owner, True))
+            new_weapons.append(
+                weapon.CreateWeaponFromDef(
+                    NewWeaponDef=new_def,
+                    PlayerOwner=weapon.Owner,
+                    bForceSelectNameParts=True,
+                ),
+            )
 
         return new_weapons
