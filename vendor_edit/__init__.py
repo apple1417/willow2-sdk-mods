@@ -1,27 +1,20 @@
-from mods_base import build_mod, get_pc, keybind
-from unrealsdk.unreal import UObject
+from mods_base import build_mod
 
-from . import bugfix, vendor_movie
-from .category_items import create_category_item
-from .replacement_lists import create_replacement_list
+from . import bugfix, hooks
+from .editor import open_editor_menu
 
-
-@keybind("go")
-def go() -> None:  # noqa: D103
-    weap = get_pc().Pawn.Weapon
-
-    replacements = create_replacement_list(weap)
-
-    def on_purchase(weap: UObject) -> None:
-        print(weap.DefinitionData.BarrelPartDefinition)
-        go.callback()  # type: ignore
-
-    vendor_movie.show(
-        items=[create_category_item(slot, weap.Owner) for slot in replacements.get_slots()],
-        iotd=None,
-        on_purchase=on_purchase,
-        on_cancel=lambda: print("cancel"),
-    )
+__version__: str
+__version_info__: tuple[int, ...]
+__all__: tuple[str, ...] = (
+    "mod",
+    "open_editor_menu",
+)
 
 
-build_mod(hooks=(*bugfix.hooks,))
+mod = build_mod(
+    options=(*hooks.options,),
+    hooks=(
+        *hooks.hooks,
+        *bugfix.hooks,
+    ),
+)

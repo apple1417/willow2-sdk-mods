@@ -4,6 +4,8 @@ from mods_base import hook
 from unrealsdk.hooks import Block
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
+__all__: tuple[str, ...] = ("hooks",)
+
 """
 There's a vanilla bug in vendors where if you compare against the item of the day, then exit, your
 selection will jump back to the main item list. There's clearly code showing the intention was to
@@ -31,12 +33,12 @@ To fix it, we simply block all calls to `SwitchToPanels` during the transition.
 
 
 @hook("WillowGame.VendingMachineExGFxMovie:SwitchToPanels")
-def block_switch_to_panels(*_: Any) -> type[Block]:  # noqa: D103
+def block_switch_to_panels(*_: Any) -> type[Block]:
     return Block
 
 
 @hook("WillowGame.VendingMachineExGFxMovie:FinishCompare")
-def on_finish_compare_iotd(  # noqa: D103
+def on_finish_compare_iotd(
     obj: UObject,
     _args: WrappedStruct,
     _ret: Any,
@@ -47,7 +49,7 @@ def on_finish_compare_iotd(  # noqa: D103
 
 
 @hook("WillowGame.VendingMachineExGFxMovie:MainInputKey")
-def end_finish_compare_iotd(*_: Any) -> None:  # noqa: D103
+def end_finish_compare_iotd(*_: Any) -> None:
     block_switch_to_panels.disable()
 
 
