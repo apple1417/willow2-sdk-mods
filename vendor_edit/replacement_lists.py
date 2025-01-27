@@ -3,7 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 import unrealsdk
 from unrealsdk.unreal import UObject, WeakPointer
@@ -16,7 +16,52 @@ type WillowWeapon = UObject
 type ManufacturerDefinition = UObject
 type WeaponPartDefinition = UObject
 
+type PartSlot = Literal[
+    "Manufacturer",
+    "Material",
+    # === Weapons ===
+    "Body",
+    "Grip",
+    "Barrel",
+    "Sight",
+    "Stock",
+    "Element",
+    "Accessory",
+    "Alt Accessory",
+    # === Shields ===
+    # "Body",
+    "Battery",
+    # "Accessory",
+    "Capacitor",
+    # === Grenades ===
+    "Payload",
+    "Delivery",
+    "Trigger",
+    # "Accessory",
+    "Damage",
+    "Blast Radius",
+    "Child Count",
+    "Status Damage",
+    # === Class Mods ===
+    "Specialization",
+    "Primary",
+    "Secondary",
+    "Penalty",
+    # === Class Mods ===
+    "Upgrade",
+    # === Misc Items ===
+    "Alpha",
+    "Beta",
+    "Gamma",
+    "Delta",
+    "Epsilon",
+    "Zeta",
+    "Eta",
+    "Theta",
+]
+
 __all__: tuple[str, ...] = (
+    "PartSlot",
     "can_create_replacements",
     "create_replacement_list",
 )
@@ -60,7 +105,7 @@ def create_replacement_list(item: WillowInventory) -> AbstractReplacementList:
 @dataclass
 class AbstractReplacementList(ABC):
     @abstractmethod
-    def get_slots(self) -> Collection[str]:
+    def get_slots(self) -> Collection[PartSlot]:
         """
         Gets the part slots this item type supports.
 
@@ -70,7 +115,7 @@ class AbstractReplacementList(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_replacements_for_slot(self, slot: str) -> Sequence[WillowInventory]:
+    def create_replacements_for_slot(self, slot: PartSlot) -> Sequence[WillowInventory]:
         """
         For a given part slot, creates an item for each possible replacement part.
 
@@ -95,7 +140,7 @@ class WeaponReplacements(AbstractReplacementList):
         attr: str
         def_data: str
 
-    BASIC_SLOTS: ClassVar[dict[str, SlotNames]] = {
+    BASIC_SLOTS: ClassVar[dict[PartSlot, SlotNames]] = {
         "Body": SlotNames("bodies", "BodyPartDefinition", "BodyPartData"),
         "Grip": SlotNames("grips", "GripPartDefinition", "GripPartData"),
         "Barrel": SlotNames("barrels", "BarrelPartDefinition", "BarrelPartData"),
@@ -106,7 +151,7 @@ class WeaponReplacements(AbstractReplacementList):
         "Alt Accessory": SlotNames("accessory2s", "Accessory2PartDefinition", "Accessory2PartData"),
         "Material": SlotNames("materials", "MaterialPartDefinition", "MaterialPartData"),
     }
-    MANUFACTURER_FRIENDLY_NAME: ClassVar[str] = "Manufacturer"
+    MANUFACTURER_FRIENDLY_NAME: ClassVar[PartSlot] = "Manufacturer"
     MANUFACTURER_SLOT_NAMES: ClassVar[ManufacturerSlotNames] = ManufacturerSlotNames(
         "manufacturers",
         "ManufacturerDefinition",
@@ -148,8 +193,8 @@ class WeaponReplacements(AbstractReplacementList):
                 ],
             )
 
-    def get_slots(self) -> Collection[str]:
-        slots: list[str] = []
+    def get_slots(self) -> Collection[PartSlot]:
+        slots: list[PartSlot] = []
 
         if self.manufacturers:
             slots.insert(0, self.MANUFACTURER_FRIENDLY_NAME)
@@ -162,7 +207,7 @@ class WeaponReplacements(AbstractReplacementList):
 
         return slots
 
-    def create_replacements_for_slot(self, slot: str) -> Sequence[WillowInventory]:
+    def create_replacements_for_slot(self, slot: PartSlot) -> Sequence[WillowInventory]:
         weapon = self.weapon()
         if weapon is None:
             raise RuntimeError("weapon got gc'd while we were still working with it!")

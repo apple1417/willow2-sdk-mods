@@ -26,9 +26,19 @@ if TYPE_CHECKING:
         SType_BlackMarket = auto()
         SType_MAX = auto()
 
+    class EInventorySortType(UnrealEnum):
+        IST_EquippedThenMajorTypeThenRarityThenSubtype = auto()
+        IST_MajorTypeThenSubtypeThenRarity = auto()
+        IST_MajorTypeThenRarityThenSubtype = auto()
+        IST_Manufacturer = auto()
+        IST_ClassRequirementThenRarity = auto()
+        IST_Value = auto()
+        IST_MAX = auto()
+
 else:
     EShopItemStatus = unrealsdk.find_enum("EShopItemStatus")
     EShopType = unrealsdk.find_enum("EShopType")
+    EInventorySortType = unrealsdk.find_enum("EInventorySortType")
 
 type WillowInventory = UObject
 type VendingMachineExGFxDefinition = UObject
@@ -99,7 +109,7 @@ def show(
     _on_purchase.enable()
     _on_close.enable()
 
-    movie = get_pc().GFxUIManager.PlayMovie(_get_gfx_def())
+    movie = get_pc().GFxUIManager.PlayMovie(get_gfx_def())
 
     movie.BlackMarketTitle = "EDIT"
     movie.StoragePanelLabel = "EDIT"
@@ -107,7 +117,7 @@ def show(
     movie.VisitLabel_BlackMarket = ""
 
 
-def _get_gfx_def() -> VendingMachineExGFxDefinition:
+def get_gfx_def() -> VendingMachineExGFxDefinition:
     """
     Gets the vendor gfx movie definition to use, constructing it if required.
 
@@ -187,6 +197,16 @@ def _init_iotd(
     return Block
 
 
+SORT_CONFIG = unrealsdk.make_struct(
+    "SortFilterConfiguration",
+    # For some reason the two `MajorTypeThenRarity` types have an unstable sort order, we can redraw
+    # the exact same list and they end up in different positions. Manufacturer seems like it'll be
+    # the most stable.
+    SortType=EInventorySortType.IST_Manufacturer,
+    SortTitleLookupKey="all",
+)
+
+
 @hook("WillowGame.TwoPanelInterfaceGFxObject:RefreshLeftPanel")
 def _refresh_left_panel(
     obj: UObject,
@@ -200,18 +220,13 @@ def _refresh_left_panel(
     vendor_movie = obj.TwoPanelInterface
     storage_panel = obj.StoragePanel
 
-    _, config = vendor_movie.GetSortConfigDataForPanel(
-        storage_panel,
-        unrealsdk.make_struct("SortFilterConfiguration"),
-    )
-
     current_index = storage_panel.CurrentSelectedIndex
 
     global pending_items
     if pending_items is not None:
         # Adding the items to the storage panel list is what actually gets them to show up, but they
         # get cleared from time to time
-        storage_panel.SetList(pending_items, config, 0)
+        storage_panel.SetList(pending_items, SORT_CONFIG, 0)
 
         # So also keep a backup reference to each item in the vendor movie, to keep them all alive
         vendor_movie.ShopItems = [
@@ -227,7 +242,7 @@ def _refresh_left_panel(
         pending_items = None
     else:
         # Restore from our backup list
-        storage_panel.SetList([x.Item for x in vendor_movie.ShopItems], config, 0)
+        storage_panel.SetList([x.Item for x in vendor_movie.ShopItems], SORT_CONFIG, 0)
 
     # This has to be a setattr to avoid name mangling
     storage_panel.__OnListSort__Delegate = obj.OnListSort
