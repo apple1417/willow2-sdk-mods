@@ -3,7 +3,7 @@ from collections.abc import Callable, Sequence
 from unrealsdk.unreal import UObject
 
 from . import vendor_movie
-from .category_items import create_category_item
+from .dummy_items import DummyItem
 from .replacement_lists import create_replacement_list
 
 type WillowInventory = UObject
@@ -34,8 +34,7 @@ def show_categories_menu(
     replacements = create_replacement_list(item)
 
     def on_purchase(purchased: WillowInventory) -> None:
-        # Slightly hacky way to get the slot back out
-        slot = purchased.SourceDefinitionName.split("_")[-1]
+        slot = DummyItem.from_balance(purchased.DefinitionData.BalanceDefinition)
         show_part_menu(
             item,
             replacements.create_replacements_for_slot(slot),
@@ -43,7 +42,7 @@ def show_categories_menu(
         )
 
     vendor_movie.show(
-        items=[create_category_item(slot, item.Owner) for slot in replacements.get_slots()],
+        items=[slot.spawn(item.Owner) for slot in replacements.get_slots()],
         iotd=item,
         on_purchase=on_purchase,
         on_cancel=on_finish,

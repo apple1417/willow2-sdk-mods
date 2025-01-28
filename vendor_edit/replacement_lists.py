@@ -3,10 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import copy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, ClassVar
 
 import unrealsdk
 from unrealsdk.unreal import UObject, WeakPointer
+
+from .dummy_items import DummyItem
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -16,52 +18,8 @@ type WillowWeapon = UObject
 type ManufacturerDefinition = UObject
 type WeaponPartDefinition = UObject
 
-type PartSlot = Literal[
-    "Manufacturer",
-    "Material",
-    # === Weapons ===
-    "Body",
-    "Grip",
-    "Barrel",
-    "Sight",
-    "Stock",
-    "Element",
-    "Accessory",
-    "Alt Accessory",
-    # === Shields ===
-    # "Body",
-    "Battery",
-    # "Accessory",
-    "Capacitor",
-    # === Grenades ===
-    "Payload",
-    "Delivery",
-    "Trigger",
-    # "Accessory",
-    "Damage",
-    "Blast Radius",
-    "Child Count",
-    "Status Damage",
-    # === Class Mods ===
-    "Specialization",
-    "Primary",
-    "Secondary",
-    "Penalty",
-    # === Class Mods ===
-    "Upgrade",
-    # === Misc Items ===
-    "Alpha",
-    "Beta",
-    "Gamma",
-    "Delta",
-    "Epsilon",
-    "Zeta",
-    "Eta",
-    "Theta",
-]
 
 __all__: tuple[str, ...] = (
-    "PartSlot",
     "can_create_replacements",
     "create_replacement_list",
 )
@@ -105,7 +63,7 @@ def create_replacement_list(item: WillowInventory) -> AbstractReplacementList:
 @dataclass
 class AbstractReplacementList(ABC):
     @abstractmethod
-    def get_slots(self) -> Collection[PartSlot]:
+    def get_slots(self) -> Collection[DummyItem]:
         """
         Gets the part slots this item type supports.
 
@@ -115,7 +73,7 @@ class AbstractReplacementList(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def create_replacements_for_slot(self, slot: PartSlot) -> Sequence[WillowInventory]:
+    def create_replacements_for_slot(self, slot: DummyItem) -> Sequence[WillowInventory]:
         """
         For a given part slot, creates an item for each possible replacement part.
 
@@ -140,18 +98,33 @@ class WeaponReplacements(AbstractReplacementList):
         attr: str
         def_data: str
 
-    BASIC_SLOTS: ClassVar[dict[PartSlot, SlotNames]] = {
-        "Body": SlotNames("bodies", "BodyPartDefinition", "BodyPartData"),
-        "Grip": SlotNames("grips", "GripPartDefinition", "GripPartData"),
-        "Barrel": SlotNames("barrels", "BarrelPartDefinition", "BarrelPartData"),
-        "Sight": SlotNames("sights", "SightPartDefinition", "SightPartData"),
-        "Stock": SlotNames("stocks", "StockPartDefinition", "StockPartData"),
-        "Element": SlotNames("elements", "ElementalPartDefinition", "ElementalPartData"),
-        "Accessory": SlotNames("accessory1s", "Accessory1PartDefinition", "Accessory1PartData"),
-        "Alt Accessory": SlotNames("accessory2s", "Accessory2PartDefinition", "Accessory2PartData"),
-        "Material": SlotNames("materials", "MaterialPartDefinition", "MaterialPartData"),
+    BASIC_SLOTS: ClassVar[dict[DummyItem, SlotNames]] = {
+        DummyItem.WEAP_BODY: SlotNames("bodies", "BodyPartDefinition", "BodyPartData"),
+        DummyItem.WEAP_GRIP: SlotNames("grips", "GripPartDefinition", "GripPartData"),
+        DummyItem.WEAP_BARREL: SlotNames("barrels", "BarrelPartDefinition", "BarrelPartData"),
+        DummyItem.WEAP_SIGHT: SlotNames("sights", "SightPartDefinition", "SightPartData"),
+        DummyItem.WEAP_STOCK: SlotNames("stocks", "StockPartDefinition", "StockPartData"),
+        DummyItem.WEAP_ELEMENT: SlotNames(
+            "elements",
+            "ElementalPartDefinition",
+            "ElementalPartData",
+        ),
+        DummyItem.WEAP_ACCESSORY: SlotNames(
+            "accessory1s",
+            "Accessory1PartDefinition",
+            "Accessory1PartData",
+        ),
+        DummyItem.WEAP_ALT_ACCESSORY: SlotNames(
+            "accessory2s",
+            "Accessory2PartDefinition",
+            "Accessory2PartData",
+        ),
+        DummyItem.MATERIAL: SlotNames(
+            "materials",
+            "MaterialPartDefinition",
+            "MaterialPartData",
+        ),
     }
-    MANUFACTURER_FRIENDLY_NAME: ClassVar[PartSlot] = "Manufacturer"
     MANUFACTURER_SLOT_NAMES: ClassVar[ManufacturerSlotNames] = ManufacturerSlotNames(
         "manufacturers",
         "ManufacturerDefinition",
@@ -193,11 +166,11 @@ class WeaponReplacements(AbstractReplacementList):
                 ],
             )
 
-    def get_slots(self) -> Collection[PartSlot]:
-        slots: list[PartSlot] = []
+    def get_slots(self) -> Collection[DummyItem]:
+        slots: list[DummyItem] = []
 
         if self.manufacturers:
-            slots.insert(0, self.MANUFACTURER_FRIENDLY_NAME)
+            slots.insert(0, DummyItem.MANUFACTURER)
 
         slots.extend(
             friendly_name
@@ -207,14 +180,14 @@ class WeaponReplacements(AbstractReplacementList):
 
         return slots
 
-    def create_replacements_for_slot(self, slot: PartSlot) -> Sequence[WillowInventory]:
+    def create_replacements_for_slot(self, slot: DummyItem) -> Sequence[WillowInventory]:
         weapon = self.weapon()
         if weapon is None:
             raise RuntimeError("weapon got gc'd while we were still working with it!")
 
         slot_names = (
             self.MANUFACTURER_SLOT_NAMES
-            if slot == self.MANUFACTURER_FRIENDLY_NAME
+            if slot is DummyItem.MANUFACTURER
             else self.BASIC_SLOTS[slot]
         )
         def_data = weapon.DefinitionData

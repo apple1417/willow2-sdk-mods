@@ -6,6 +6,8 @@ from mods_base import get_pc, hook
 from unrealsdk.hooks import Block, Type
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
+from .packages import ROOT
+
 if TYPE_CHECKING:
     from enum import auto
 
@@ -45,12 +47,12 @@ type VendingMachineExGFxDefinition = UObject
 
 __all__: tuple[str, ...] = ("show",)
 
-
+VENDOR_GFX_DEF_NAME = "vendor_gfx_def"
 vendor_gfx_def: VendingMachineExGFxDefinition | None
 try:
     vendor_gfx_def = unrealsdk.find_object(
         "VendingMachineExGFxDefinition",
-        "UI_VendingMachine.vendor_edit_def",
+        f"{ROOT.path_name}.{VENDOR_GFX_DEF_NAME}",
     )
 except ValueError:
     vendor_gfx_def = None
@@ -136,8 +138,8 @@ def get_gfx_def() -> VendingMachineExGFxDefinition:
         )
         vendor_gfx_def = unrealsdk.construct_object(
             black_market.Class,
-            black_market.Outer,
-            "vendor_edit_def",
+            ROOT.unreal,
+            VENDOR_GFX_DEF_NAME,
             0x4000,
             black_market,
         )
