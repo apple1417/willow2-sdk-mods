@@ -175,6 +175,13 @@ class DummyItem(DummyItemMixin, Enum):
     COM_PENALTY = "Penalty", "com_penalty"
     # ================
     RELIC_UPGRADE = "Upgrade", "relic_upgrade"
+    # ================
+    LEVEL = "Level", "level"
+    LEVEL_MAX = "Max Usable", "level_max"
+    LEVEL_PLUS_10 = "+10", "level_+10"
+    LEVEL_PLUS_1 = "+1", "level_+1"
+    LEVEL_MINUS_1 = "-1", "level_-1"
+    LEVEL_MINUS_10 = "-10", "level_-10"
 
     @classmethod
     def from_balance(cls, bal: InventoryBalanceDefinition) -> DummyItem:
@@ -187,9 +194,9 @@ class DummyItem(DummyItemMixin, Enum):
             The relevant enum value.
         """
         for entry in cls:
-            if entry.obj_name == bal.Name:
+            if entry.obj_name.lower() == bal.Name.lower():
                 return entry
-        raise ValueError("Couldn't find dummy item for balance")
+        raise ValueError(f"Couldn't find dummy item for balance: {bal}")
 
 
 _all_obj_names = [i.obj_name for i in DummyItem]

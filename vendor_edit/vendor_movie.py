@@ -96,7 +96,11 @@ def show(
         raise RuntimeError("cannot show two vendor movies at once")
     any_movie_active = True
 
-    pending_items = items
+    # For some reason, the game puts the very first item in the list aat the bottom, but leaves the
+    # rest in order - a list ABCDE displays BCDEA. Fix this up ourselves to have a more intuitive
+    # interface.
+    pending_items = (items[-1], *items[:-1])
+
     pending_iotd = iotd
     on_purchase_callback = on_purchase
     on_cancel_callback = on_cancel
@@ -350,7 +354,10 @@ def _on_close(*_: Any) -> None:
     global any_movie_active, on_purchase_callback, on_cancel_callback
     any_movie_active = False
 
-    if on_cancel_callback is not None:
-        on_cancel_callback()
+    on_cancel = on_cancel_callback
+
     on_purchase_callback = None
     on_cancel_callback = None
+
+    if on_cancel is not None:
+        on_cancel()
