@@ -91,48 +91,56 @@ class WeaponReplacements(AbstractReplacementList):
     class SlotNames:
         attr: str
         def_data: str
-        part_list: str
 
     @dataclass(frozen=True)
-    class ManufacturerSlotNames:
-        attr: str
-        def_data: str
+    class PartListSlotNames(SlotNames):
+        part_list: str
 
-    BASIC_SLOTS: ClassVar[dict[DummyItem, SlotNames]] = {
-        DummyItem.WEAP_BODY: SlotNames("bodies", "BodyPartDefinition", "BodyPartData"),
-        DummyItem.WEAP_GRIP: SlotNames("grips", "GripPartDefinition", "GripPartData"),
-        DummyItem.WEAP_BARREL: SlotNames("barrels", "BarrelPartDefinition", "BarrelPartData"),
-        DummyItem.WEAP_SIGHT: SlotNames("sights", "SightPartDefinition", "SightPartData"),
-        DummyItem.WEAP_STOCK: SlotNames("stocks", "StockPartDefinition", "StockPartData"),
-        DummyItem.WEAP_ELEMENT: SlotNames(
+    BASIC_SLOTS: ClassVar[dict[DummyItem, PartListSlotNames]] = {
+        DummyItem.WEAP_BODY: PartListSlotNames("bodies", "BodyPartDefinition", "BodyPartData"),
+        DummyItem.WEAP_GRIP: PartListSlotNames("grips", "GripPartDefinition", "GripPartData"),
+        DummyItem.WEAP_BARREL: PartListSlotNames(
+            "barrels",
+            "BarrelPartDefinition",
+            "BarrelPartData",
+        ),
+        DummyItem.WEAP_SIGHT: PartListSlotNames("sights", "SightPartDefinition", "SightPartData"),
+        DummyItem.WEAP_STOCK: PartListSlotNames("stocks", "StockPartDefinition", "StockPartData"),
+        DummyItem.WEAP_ELEMENT: PartListSlotNames(
             "elements",
             "ElementalPartDefinition",
             "ElementalPartData",
         ),
-        DummyItem.WEAP_ACCESSORY: SlotNames(
+        DummyItem.WEAP_ACCESSORY: PartListSlotNames(
             "accessory1s",
             "Accessory1PartDefinition",
             "Accessory1PartData",
         ),
-        DummyItem.WEAP_ALT_ACCESSORY: SlotNames(
+        DummyItem.WEAP_ALT_ACCESSORY: PartListSlotNames(
             "accessory2s",
             "Accessory2PartDefinition",
             "Accessory2PartData",
         ),
-        DummyItem.MATERIAL: SlotNames(
+        DummyItem.MATERIAL: PartListSlotNames(
             "materials",
             "MaterialPartDefinition",
             "MaterialPartData",
         ),
     }
-    MANUFACTURER_SLOT_NAMES: ClassVar[ManufacturerSlotNames] = ManufacturerSlotNames(
+    MANUFACTURER_SLOT_NAMES: ClassVar[SlotNames] = SlotNames(
         "manufacturers",
         "ManufacturerDefinition",
+    )
+    LEVEL_SLOT_NAMES: ClassVar[SlotNames] = SlotNames(
+        "levels",
+        "ManufacturerGradeIndex",
     )
 
     weapon: WeakPointer[WillowWeapon]
 
     manufacturers: list[ManufacturerDefinition]
+    # The game itself sorts any entries we give it by level, so can leave this as a set
+    levels: set[int]
 
     bodies: list[WeaponPartDefinition]
     grips: list[WeaponPartDefinition]
@@ -153,6 +161,30 @@ class WeaponReplacements(AbstractReplacementList):
             manu for entry in balance.Manufacturers if (manu := entry.Manufacturer) is not None
         ]
 
+        player_level = (owner := weapon.Owner).GetExpLevel()
+        op_levels = (
+            controller := owner.Controller
+        ).PlayerReplicationInfo.NumOverpowerLevelsUnlocked
+        max_level = (
+            controller.GetMaximumPossiblePlayerLevelCap()
+            + controller.GetMaximumPossibleOverpowerModifier()
+        )
+
+        original_level = def_data.ManufacturerGradeIndex
+        self.levels = {
+            clamped
+            for x in (
+                player_level + op_levels,
+                original_level + 10,
+                original_level + 5,
+                original_level + 1,
+                original_level - 1,
+                original_level - 5,
+                original_level - 10,
+            )
+            if (clamped := max(1, min(x, max_level))) != original_level
+        }
+
         part_list = balance.RuntimePartListCollection
         for slot_names in self.BASIC_SLOTS.values():
             original_part = getattr(def_data, slot_names.def_data)
@@ -170,7 +202,10 @@ class WeaponReplacements(AbstractReplacementList):
         slots: list[DummyItem] = []
 
         if self.manufacturers:
-            slots.insert(0, DummyItem.MANUFACTURER)
+            slots.append(DummyItem.MANUFACTURER)
+
+        if self.levels:
+            slots.append(DummyItem.LEVEL)
 
         slots.extend(
             friendly_name
@@ -185,17 +220,25 @@ class WeaponReplacements(AbstractReplacementList):
         if weapon is None:
             raise RuntimeError("weapon got gc'd while we were still working with it!")
 
-        slot_names = (
-            self.MANUFACTURER_SLOT_NAMES
-            if slot is DummyItem.MANUFACTURER
-            else self.BASIC_SLOTS[slot]
-        )
+        slot_names: WeaponReplacements.SlotNames
+        match slot:
+            case DummyItem.MANUFACTURER:
+                slot_names = self.MANUFACTURER_SLOT_NAMES
+            case DummyItem.LEVEL:
+                slot_names = self.LEVEL_SLOT_NAMES
+            case _:
+                slot_names = self.BASIC_SLOTS[slot]
+
         def_data = weapon.DefinitionData
 
         new_weapons: list[WillowWeapon] = []
         for part in getattr(self, slot_names.attr):
             new_def = copy(def_data)
             setattr(new_def, slot_names.def_data, part)
+
+            # Keep game stage synced - this is general good practice, and we explictly want it when
+            # editing level
+            new_def.GameStage = new_def.ManufacturerGradeIndex
 
             new_weapons.append(
                 weapon.CreateWeaponFromDef(

@@ -137,6 +137,7 @@ class DummyItemMixin:
 class DummyItem(DummyItemMixin, Enum):
     MANUFACTURER = "Manufacturer", "manufacturer"
     MATERIAL = "Material", "material"
+    LEVEL = "Level", "level"
     ALPHA = "Alpha", "alpha"
     BETA = "Beta", "beta"
     GAMMA = "Gamma", "gamma"
@@ -175,13 +176,6 @@ class DummyItem(DummyItemMixin, Enum):
     COM_PENALTY = "Penalty", "com_penalty"
     # ================
     RELIC_UPGRADE = "Upgrade", "relic_upgrade"
-    # ================
-    LEVEL = "Level", "level"
-    LEVEL_MAX = "Max Usable", "level_max"
-    LEVEL_PLUS_10 = "+10", "level_+10"
-    LEVEL_PLUS_1 = "+1", "level_+1"
-    LEVEL_MINUS_1 = "-1", "level_-1"
-    LEVEL_MINUS_10 = "-10", "level_-10"
 
     @classmethod
     def from_balance(cls, bal: InventoryBalanceDefinition) -> DummyItem:
