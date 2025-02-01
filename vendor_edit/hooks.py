@@ -1,13 +1,10 @@
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-import unrealsdk
 from mods_base import (
     BaseOption,
-    BoolOption,
     EInputEvent,
     HookType,
     KeybindOption,
-    get_pc,
     hook,
 )
 from ui_utils import clipboard_copy, show_chat_message
@@ -15,26 +12,10 @@ from unrealsdk import logging
 from unrealsdk.hooks import Block, Type, Unset, prevent_hooking_direct_calls
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
-from .editor import open_editor_menu
-from .item_codes import serial_struct_to_code
+from .editor import EBackButtonScreen, open_editor_menu
+from .item_codes import get_item_code
 from .replacement_lists import can_create_replacements
-
-if TYPE_CHECKING:
-    from enum import auto
-
-    from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
-
-    class EBackButtonScreen(UnrealEnum):
-        CS_None = auto()
-        CS_MissionLog = auto()
-        CS_Map = auto()
-        CS_Inventory = auto()
-        CS_Skills = auto()
-        CS_Challenges = auto()
-        CS_MAX = auto()
-
-else:
-    EBackButtonScreen = unrealsdk.find_enum("EBackButtonScreen")
+from .spawner import open_spawner_menu
 
 type StatusMenuExGFxMovie = UObject
 type WillowInventory = UObject
@@ -44,19 +25,14 @@ __all__: tuple[str, ...] = (
     "options",
 )
 
-reopen_inv_option = BoolOption(
-    "Reopen Inventory After Editing",
-    True,
-    description="If to re-open your inventory after you finish editing an item.",
-)
 edit_bind = KeybindOption(
     "Edit Item",
-    "Zero",
+    "F9",
     description="While in your inventory, press this key on an item to start editing.",
 )
 spawn_bind = KeybindOption(
     "Spawn Item",
-    "Nine",
+    "F10",
     description=(
         "While in your inventory, press this key to spawn a brand new item, which you'll get to"
         " configure."
@@ -64,7 +40,7 @@ spawn_bind = KeybindOption(
 )
 copy_bind = KeybindOption(
     "Copy Code",
-    "Eight",
+    "F11",
     description="While in your inventory, press this key to copy an item's code.",
 )
 
@@ -184,7 +160,7 @@ _item_to_edit: WillowInventory | None = None
 
 def handle_edit_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
     """
-    Handles a press for the edit menu.
+    Handles an "Edit Item" press.
 
     Args:
         obj: The current inventory movie object.
@@ -212,19 +188,13 @@ def on_close_to_edit(*_: Any) -> None:
 
     global _item_to_edit
     if _item_to_edit is not None:
-
-        def on_finish() -> None:
-            pc = get_pc()
-            pc.QuickAccessScreen = EBackButtonScreen.CS_Inventory
-            pc.GetPlayerViewportClient().ViewportUI.RunStatusMenu(pc)
-
-        open_editor_menu(_item_to_edit, on_finish if reopen_inv_option.value else None)
+        open_editor_menu(_item_to_edit)
         _item_to_edit = None
 
 
 def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
     """
-    Handles a press for coping an item code.
+    Handles a "Copy Code" press.
 
     Args:
         obj: The current inventory movie object.
@@ -236,7 +206,7 @@ def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | N
         return None
 
     name = item.GetShortHumanReadableName()
-    code = serial_struct_to_code(item.CreateSerialNumber())
+    code = get_item_code(item)
     clipboard_copy(code)
 
     logging.info(f"Serial code for {name}: {code}")
@@ -246,4 +216,4 @@ def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | N
 
 
 hooks: list[HookType] = [start_update_tooltips, stop_update_tooltips, handle_menu_input]
-options: list[BaseOption] = [reopen_inv_option, edit_bind, spawn_bind, copy_bind]
+options: list[BaseOption] = [edit_bind, spawn_bind, copy_bind]

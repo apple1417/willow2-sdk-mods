@@ -1,9 +1,11 @@
 from base64 import b64encode
 
 from mods_base import Game
-from unrealsdk.unreal import WrappedStruct
+from unrealsdk.unreal import UObject
 
-type InventorySerialNumber = WrappedStruct
+type WillowInventory = UObject
+
+__all__: tuple[str, ...] = ("get_item_code",)
 
 
 CODE_PREFIX: str = {
@@ -13,18 +15,18 @@ CODE_PREFIX: str = {
 }.get(_game := Game.get_current(), _game.name or "")
 
 
-def serial_struct_to_code(serial: InventorySerialNumber) -> str:
+def get_item_code(inv: WillowInventory) -> str:
     """
-    Converts a serial number struct into it's item code equivalent.
+    Gets the save-editor compatible item code for the given item.
 
     Args:
-        serial: The serial code struct.
+        inv: The inventory item to get the code fo.
     Returns:
         The item code.
     """
-    buffer = bytearray(serial.Buffer)
+    buffer = bytearray(inv.CreateSerialNumber().Buffer)
 
-    # Comparing a code from WillowInventory.CreateSerialNumber() vs a save editor:
+    # Comparing a code from CreateSerialNumber() vs a save editor:
     # editor:  87 00000000 4a7e 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3
     # in game: 87 d1620929 ffff 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3 ff
     #               key    check                                                             padding
