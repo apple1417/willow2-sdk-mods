@@ -145,8 +145,7 @@ def handle_menu_input(
         case edit_bind.value, EInputEvent.IE_Released:
             return handle_edit_press(obj)
         case spawn_bind.value, EInputEvent.IE_Released:
-            # TODO
-            return None
+            return handle_spawn_press(obj)
         case copy_bind.value, EInputEvent.IE_Released:
             return handle_copy_press(obj)
         case _:
@@ -190,6 +189,27 @@ def on_close_to_edit(*_: Any) -> None:
     if _item_to_edit is not None:
         open_editor_menu(_item_to_edit)
         _item_to_edit = None
+
+
+def handle_spawn_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
+    """
+    Handles a "Spawn Item" press.
+
+    Args:
+        obj: The current inventory movie object.
+    Returns:
+        The hook's return value.
+    """
+    on_close_to_spawn.enable()
+    obj.Hide()
+    return Block, True
+
+
+@hook("WillowGame.StatusMenuExGFxMovie:OnClose", Type.POST)
+def on_close_to_spawn(*_: Any) -> None:
+    on_close_to_spawn.disable()
+
+    open_spawner_menu()
 
 
 def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:

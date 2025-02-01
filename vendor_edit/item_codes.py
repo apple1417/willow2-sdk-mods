@@ -1,9 +1,14 @@
-from base64 import b64encode
+import binascii
+import re
+import struct
+from base64 import b64decode, b64encode
 
+import unrealsdk
 from mods_base import Game
-from unrealsdk.unreal import UObject
+from unrealsdk.unreal import BoundFunction, UObject
 
 type WillowInventory = UObject
+type WillowPawn = UObject
 
 __all__: tuple[str, ...] = ("get_item_code",)
 
@@ -24,6 +29,12 @@ def get_item_code(inv: WillowInventory) -> str:
     Returns:
         The item code.
     """
+    # We can actually implement this using just the following:
+    #     return f"{CODE_PREFIX}({inv.GetSerialNumberString()})"  # noqa: ERA001
+    # The code this gives contains a non-zero encoding key. Most codes from a save editor zero it.
+    # Due to reasons discussed later, we need to do some manual serial decoding anyway, so might as
+    # well also zero ours, so that codes tend to round trip.
+
     buffer = bytearray(inv.CreateSerialNumber().Buffer)
 
     # Comparing a code from CreateSerialNumber() vs a save editor:
@@ -36,21 +47,119 @@ def get_item_code(inv: WillowInventory) -> str:
     buffer[1:5] = (0, 0, 0, 0)
 
     # Now fix the checksum
-    crc = gearbox_crc(buffer.ljust(40, b"\xff"))
-    check = (crc >> 16) ^ (crc & 0xFFFF)
-    buffer[5] = check >> 8
-    buffer[6] = check & 0xFF
+    check = calc_serial_checksum(buffer)
+    struct.pack_into(">H", buffer, 5, check)
 
     # Next, get rid of any trailing FF padding. Gibbed's editor does handle them properly, but not
-    # sure if others will. This also means codes should be able to round trip without changing.
+    # sure if others will.
     buffer = buffer.rstrip(b"\xff")
 
     # Now we can finally b64 it and add the prefix/brackets
     return f"{CODE_PREFIX}({b64encode(buffer).decode('ascii')})"
 
 
+CREATE_INV_FROM_STRING: BoundFunction = unrealsdk.find_class(
+    "WillowInventory",
+).ClassDefaultObject.CreateInventoryFromSerialNumberString
+
+RE_CODE_CONTENTS = re.compile(r"^.+?\((.+)\)$")
+
+
+def spawn_item_from_code(code: str, owner: WillowPawn) -> WillowInventory | None:
+    """
+    Tries to spawn an item from the give item code.
+
+    Note this does not add the item to the pawn's inventory. To do this, also call:
+        owner.InvManager.AddInventoryToBackpack(item)
+
+    Args:
+        code: The item code to try spawn.
+        owner: The pawn to set as the item's owner.
+    Returns:
+        The item, or None on failure.
+    """
+    match = RE_CODE_CONTENTS.match(code.strip())
+    if match is None:
+        return None
+    serial_number = match.group(1)
+
+    # Unfortunately, we need to do some extra validation before we can call CREATE_INV_FROM_STRING
+    # If the code's too short, it will immediately crash the game. There may be other causes too.
+    # We'll ensure the checksum validates, to make sure the string is at least serial number shaped.
+    # This is why we need to do some manual parsing, as referenced above.
+
+    try:
+        encoded_serial = b64decode(serial_number, validate=True)
+    except binascii.Error:
+        return None
+
+    # 1 byte prefix, 4 byte key, 2 byte checksum, and assume at least 1 byte of data
+    if len(encoded_serial) < 8:  # noqa: PLR2004
+        return None
+
+    decoded_buffer = decode_serial(encoded_serial)
+
+    # Make sure the checksum is valid
+    original_check = struct.unpack_from(">H", decoded_buffer, 5)[0]
+
+    decoded_buffer[5:7] = (0xFF, 0xFF)
+    check = calc_serial_checksum(decoded_buffer)
+
+    if check != original_check:
+        return None
+
+    # Item code looks valid enough, try it
+    item, _ = CREATE_INV_FROM_STRING(serial_number, owner)
+
+    # If we had a valid looking serial number, but it contained invalid data (e.g. a TPS code in
+    # BL2), the returned item will be None.
+    if item is None:
+        return None
+
+    item.Owner = owner
+
+    return item
+
+
 # This code ported from Gibbed's editor. For some reason Gearbox uses a custom CRC...
 # https://github.com/gibbed/Gibbed.Gearbox/blob/cdb03b048e4989c2272162ebc40f5f34f14712fd/Gibbed.Gearbox.Common/CRC32.cs#L38
+
+
+def decode_serial(encoded_serial: bytes) -> bytearray:
+    """
+    Decode an encoded serial number.
+
+    Args:
+        encoded_serial: The encoded serial number.
+    Returns:
+        The decoded serial number.
+    """
+    key_and_steps = struct.unpack_from(">i", encoded_serial, 1)[0]
+    key = key_and_steps >> 5
+
+    if key == 0:
+        return bytearray(encoded_serial)
+
+    xored = bytearray()
+    for byte in encoded_serial[5:]:
+        key = (key * 0x10A860C1) % 0xFFFFFFFB
+        xored.append((byte ^ key) & 0xFF)
+
+    steps = (key_and_steps & 0b11111) % len(xored)
+    return bytearray((encoded_serial[0], 0, 0, 0, 0)) + xored[-steps:] + xored[:-steps]
+
+
+def calc_serial_checksum(serial: bytearray) -> int:
+    """
+    Calculates the 16-bit checksum stored in bytes 5 and 6 of a serial number.
+
+    Args:
+        serial: The serial number to calculate the checksum of.
+    Returns:
+        The checksum
+    """
+    crc = gearbox_crc(serial)
+    return (crc >> 16) ^ (crc & 0xFFFF)
 
 
 def gearbox_crc(buffer: bytearray) -> int:
@@ -63,7 +172,7 @@ def gearbox_crc(buffer: bytearray) -> int:
         The crc, as an integer.
     """
     wip_hash = 0xFFFFFFFF
-    for byte in buffer:
+    for byte in buffer.ljust(40, b"\xff"):
         wip_hash = CRC_TABLE[(wip_hash ^ byte) & 0xFF] ^ (wip_hash >> 8)
 
     return (~wip_hash) & 0xFFFFFFFF

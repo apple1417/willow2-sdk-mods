@@ -176,6 +176,8 @@ class DummyItem(DummyItemMixin, Enum):
     COM_PENALTY = "Penalty", "com_penalty"
     # ================
     RELIC_UPGRADE = "Upgrade", "relic_upgrade"
+    # ================
+    PASTE_CODE = "Paste Code", "paste_code"
 
     @classmethod
     def from_balance(cls, bal: InventoryBalanceDefinition) -> DummyItem:

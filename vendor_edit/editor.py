@@ -31,6 +31,7 @@ type WillowInventory = UObject
 __all__: tuple[str, ...] = (
     "open_editor_menu",
     "options",
+    "reopen_inventory",
 )
 
 
@@ -55,6 +56,7 @@ def open_editor_menu(item: WillowInventory) -> None:
 
 
 def reopen_inventory() -> None:
+    """Re-opens the inventory menu, if required."""
     if not reopen_inv_option.value:
         return
     pc = get_pc()

@@ -411,16 +411,17 @@ class ItemReplacements(BaseReplacementList):
         for slot_names in self.get_basic_slots().values():
             original_part = getattr(def_data, slot_names.def_data)
 
-            # If the parts list collection defines any parts, treat that as an override
-            collection_part_list = getattr(part_list_collection, slot_names.part_list)
-            if collection_part_list.bEnabled:
-                collection_parts = {
-                    part
-                    for part_slot in collection_part_list.WeightedParts
-                    if (part := part_slot.Part) != original_part
-                }
-                setattr(self, slot_names.attr, collection_parts)
-                continue
+            # If the parts list collection exists, and defines any parts, treat them as an override
+            if part_list_collection is not None:
+                collection_part_list = getattr(part_list_collection, slot_names.part_list)
+                if collection_part_list.bEnabled:
+                    collection_parts = {
+                        part
+                        for part_slot in collection_part_list.WeightedParts
+                        if (part := part_slot.Part) != original_part
+                    }
+                    setattr(self, slot_names.attr, collection_parts)
+                    continue
 
             # No collection parts, fall back to those on the definition
             definition_part_list = getattr(definition, slot_names.item_definition)
