@@ -89,18 +89,21 @@ class BaseReplacementList(IReplacementList):
 
     inv: WeakPointer[WillowInventory]
 
-    manufacturers: set[ManufacturerDefinition]
-    levels: set[int]
+    manufacturers: list[ManufacturerDefinition]
+    levels: list[int]
 
     def __init__(self, inv: WillowInventory) -> None:
         self.inv = WeakPointer(inv)
 
         original_manu = (def_data := inv.DefinitionData).ManufacturerDefinition
-        self.manufacturers = {
-            manu
-            for entry in def_data.BalanceDefinition.Manufacturers
-            if (manu := entry.Manufacturer) is not None and manu != original_manu
-        }
+        self.manufacturers = sorted(
+            {
+                manu
+                for entry in def_data.BalanceDefinition.Manufacturers
+                if (manu := entry.Manufacturer) is not None and manu != original_manu
+            },
+            key=str,
+        )
 
         player_level = (owner := inv.Owner).GetExpLevel()
         op_levels = (
@@ -112,19 +115,21 @@ class BaseReplacementList(IReplacementList):
         )
 
         original_level = inv.DefinitionData.ManufacturerGradeIndex
-        self.levels = {
-            clamped
-            for x in (
-                player_level + op_levels,
-                original_level + 10,
-                original_level + 5,
-                original_level + 1,
-                original_level - 1,
-                original_level - 5,
-                original_level - 10,
-            )
-            if (clamped := max(1, min(x, max_level))) != original_level
-        }
+        self.levels = sorted(
+            {
+                clamped
+                for x in (
+                    player_level + op_levels,
+                    original_level + 10,
+                    original_level + 5,
+                    original_level + 1,
+                    original_level - 1,
+                    original_level - 5,
+                    original_level - 10,
+                )
+                if (clamped := max(1, min(x, max_level))) != original_level
+            },
+        )
 
         self.init_basic_slots(inv)
 
@@ -262,15 +267,15 @@ class WeaponReplacements(BaseReplacementList):
 
     UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowWeapon")
 
-    bodies: set[WeaponPartDefinition]
-    grips: set[WeaponPartDefinition]
-    barrels: set[WeaponPartDefinition]
-    sights: set[WeaponPartDefinition]
-    stocks: set[WeaponPartDefinition]
-    elements: set[WeaponPartDefinition]
-    accessory1s: set[WeaponPartDefinition]
-    accessory2s: set[WeaponPartDefinition]
-    materials: set[WeaponPartDefinition]
+    bodies: list[WeaponPartDefinition]
+    grips: list[WeaponPartDefinition]
+    barrels: list[WeaponPartDefinition]
+    sights: list[WeaponPartDefinition]
+    stocks: list[WeaponPartDefinition]
+    elements: list[WeaponPartDefinition]
+    accessory1s: list[WeaponPartDefinition]
+    accessory2s: list[WeaponPartDefinition]
+    materials: list[WeaponPartDefinition]
 
     def __init__(self, inv: WillowInventory) -> None:
         super().__init__(inv)
@@ -286,18 +291,21 @@ class WeaponReplacements(BaseReplacementList):
         for slot_names in self.BASIC_SLOTS.values():
             part_list = getattr(part_list_collection, slot_names.part_list)
             if not part_list.bEnabled:
-                setattr(self, slot_names.attr, set())
+                setattr(self, slot_names.attr, [])
                 continue
 
             original_part = getattr(def_data, slot_names.def_data)
             setattr(
                 self,
                 slot_names.attr,
-                {
-                    part
-                    for part_slot in part_list.WeightedParts
-                    if (part := part_slot.Part) != original_part
-                },
+                sorted(
+                    {
+                        part
+                        for part_slot in part_list.WeightedParts
+                        if (part := part_slot.Part) != original_part
+                    },
+                    key=str,
+                ),
             )
 
     @staticmethod
@@ -385,15 +393,15 @@ class ItemReplacements(BaseReplacementList):
 
     UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowItem")
 
-    alpha: set[ItemPartDefinition]
-    beta: set[ItemPartDefinition]
-    gamma: set[ItemPartDefinition]
-    delta: set[ItemPartDefinition]
-    epsilon: set[ItemPartDefinition]
-    zeta: set[ItemPartDefinition]
-    eta: set[ItemPartDefinition]
-    theta: set[ItemPartDefinition]
-    materials: set[ItemPartDefinition]
+    alpha: list[ItemPartDefinition]
+    beta: list[ItemPartDefinition]
+    gamma: list[ItemPartDefinition]
+    delta: list[ItemPartDefinition]
+    epsilon: list[ItemPartDefinition]
+    zeta: list[ItemPartDefinition]
+    eta: list[ItemPartDefinition]
+    theta: list[ItemPartDefinition]
+    materials: list[ItemPartDefinition]
 
     def __init__(self, inv: WillowInventory) -> None:
         super().__init__(inv)
@@ -414,28 +422,37 @@ class ItemReplacements(BaseReplacementList):
             if part_list_collection is not None:
                 collection_part_list = getattr(part_list_collection, slot_names.part_list)
                 if collection_part_list.bEnabled:
-                    collection_parts = {
-                        part
-                        for part_slot in collection_part_list.WeightedParts
-                        if (part := part_slot.Part) != original_part
-                    }
-                    setattr(self, slot_names.attr, collection_parts)
+                    setattr(
+                        self,
+                        slot_names.attr,
+                        sorted(
+                            {
+                                part
+                                for part_slot in collection_part_list.WeightedParts
+                                if (part := part_slot.Part) != original_part
+                            },
+                            key=str,
+                        ),
+                    )
                     continue
 
             # No collection parts, fall back to those on the definition
             definition_part_list = getattr(definition, slot_names.item_definition)
             if definition_part_list is None:
-                setattr(self, slot_names.attr, set())
+                setattr(self, slot_names.attr, [])
                 continue
 
             setattr(
                 self,
                 slot_names.attr,
-                {
-                    part
-                    for part_slot in definition_part_list.WeightedParts
-                    if (part := part_slot.Part) != original_part
-                },
+                sorted(
+                    {
+                        part
+                        for part_slot in definition_part_list.WeightedParts
+                        if (part := part_slot.Part) != original_part
+                    },
+                    key=str,
+                ),
             )
 
     @staticmethod
