@@ -2,7 +2,7 @@ from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import unrealsdk
-from mods_base import get_pc, hook
+from mods_base import Game, get_pc, hook
 from unrealsdk.hooks import Block, Type
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
@@ -56,6 +56,12 @@ try:
     )
 except ValueError:
     vendor_gfx_def = None
+
+REQUIRED_PACKAGES_BY_GAME: dict[Game, tuple[str, ...]] = {
+    Game.BL2: ("Sanctuary_P", "Sanctuary_Dynamic"),
+    Game.TPS: ("Spaceport_Combat",),
+    Game.AoDK: ("Village_P",),
+}
 
 # This is all designed around the assumption only one vendor movie's open at a time, keep track so
 # we can throw
@@ -132,9 +138,8 @@ def get_gfx_def() -> VendingMachineExGFxDefinition:
     """
     global vendor_gfx_def
     if vendor_gfx_def is None:
-        # TODO: other games
-        unrealsdk.load_package("Sanctuary_P")
-        unrealsdk.load_package("Sanctuary_Dynamic")
+        for package in REQUIRED_PACKAGES_BY_GAME[Game.get_current()]:
+            unrealsdk.load_package(package)
 
         black_market = unrealsdk.find_object(
             "VendingMachineExGFxDefinition",

@@ -106,13 +106,19 @@ class BaseReplacementList(IReplacementList):
         )
 
         player_level = (owner := inv.Owner).GetExpLevel()
-        op_levels = (
-            controller := owner.Controller
-        ).PlayerReplicationInfo.NumOverpowerLevelsUnlocked
-        max_level = (
-            controller.GetMaximumPossiblePlayerLevelCap()
-            + controller.GetMaximumPossibleOverpowerModifier()
-        )
+        controller = owner.Controller
+        try:
+            op_levels = controller.PlayerReplicationInfo.NumOverpowerLevelsUnlocked
+        except AttributeError:
+            op_levels = 0
+
+        try:
+            max_level = (
+                controller.GetMaximumPossiblePlayerLevelCap()
+                + controller.GetMaximumPossibleOverpowerModifier()
+            )
+        except AttributeError:
+            max_level = controller.GetMaxExpLevel()
 
         original_level = inv.DefinitionData.ManufacturerGradeIndex
         self.levels = sorted(
@@ -413,7 +419,13 @@ class ItemReplacements(BaseReplacementList):
     def init_basic_slots(self, inv: WillowInventory) -> None:
         balance = (def_data := inv.DefinitionData).BalanceDefinition
         definition = balance.InventoryDefinition
-        part_list_collection = balance.PartListCollection
+
+        try:
+            # If a an item has a runtime parts list, prefer that
+            part_list_collection = balance.RuntimePartListCollection
+        except AttributeError:
+            # Fall back to the basic one
+            part_list_collection = balance.PartListCollection
 
         for slot_names in self.get_basic_slots().values():
             original_part = getattr(def_data, slot_names.def_data)
@@ -437,23 +449,28 @@ class ItemReplacements(BaseReplacementList):
                     continue
 
             # No collection parts, fall back to those on the definition
-            definition_part_list = getattr(definition, slot_names.item_definition)
-            if definition_part_list is None:
-                setattr(self, slot_names.attr, [])
+            if definition is not None:
+                definition_part_list = getattr(definition, slot_names.item_definition)
+                if definition_part_list is None:
+                    setattr(self, slot_names.attr, [])
+                    continue
+
+                setattr(
+                    self,
+                    slot_names.attr,
+                    sorted(
+                        {
+                            part
+                            for part_slot in definition_part_list.WeightedParts
+                            if (part := part_slot.Part) != original_part
+                        },
+                        key=str,
+                    ),
+                )
                 continue
 
-            setattr(
-                self,
-                slot_names.attr,
-                sorted(
-                    {
-                        part
-                        for part_slot in definition_part_list.WeightedParts
-                        if (part := part_slot.Part) != original_part
-                    },
-                    key=str,
-                ),
-            )
+            # Didn't find any source of parts
+            setattr(self, slot_names.attr, [])
 
     @staticmethod
     def create_from_def_data(inv: WillowItem, def_data: ItemDefinitionData) -> WillowInventory:

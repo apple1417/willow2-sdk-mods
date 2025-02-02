@@ -15,7 +15,7 @@ __all__: tuple[str, ...] = ("get_item_code",)
 
 CODE_PREFIX: str = {
     Game.BL2: "BL2",
-    Game.TPS: "BLTPS",
+    Game.TPS: "BLOZ",
     Game.AoDK: "AODK",
 }.get(_game := Game.get_current(), _game.name or "")
 
