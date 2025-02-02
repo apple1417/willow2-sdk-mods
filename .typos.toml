@@ -33,7 +33,15 @@ extend-ignore-re = [
     # Ignore markdown links to github commits/trees
     "\\[[0-9a-fA-F]+?\\]\\(https://github.com/.+?/.+?/(commit|tree)/.+?\\)",
     # Ignore this specific hook string, which gearbox typo'd
-    "\"WillowGame\\.WillowPlayerController:CanAcessOakUpsell\""
+    "\"WillowGame\\.WillowPlayerController:CanAcessOakUpsell\"",
+    # Ignore the `EInventorySortType` enum prefix
+    "IST_EquippedThenMajorTypeThenRarityThenSubtype",
+    "IST_MajorTypeThenSubtypeThenRarity",
+    "IST_MajorTypeThenRarityThenSubtype",
+    "IST_Manufacturer",
+    "IST_ClassRequirementThenRarity",
+    "IST_Value",
+    "IST_MAX",
 ]
 
 [default.extend-identifiers]

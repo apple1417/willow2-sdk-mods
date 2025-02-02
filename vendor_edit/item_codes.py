@@ -25,7 +25,7 @@ def get_item_code(inv: WillowInventory) -> str:
     Gets the save-editor compatible item code for the given item.
 
     Args:
-        inv: The inventory item to get the code fo.
+        inv: The inventory item to get the code of.
     Returns:
         The item code.
     """

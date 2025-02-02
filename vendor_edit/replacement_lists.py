@@ -176,7 +176,7 @@ class BaseReplacementList(IReplacementList):
             new_def = copy(def_data)
             setattr(new_def, slot_names.def_data, part)
 
-            # Keep game stage synced - this is general good practice, and we explictly want it when
+            # Keep game stage synced - this is general good practice, and we explicitly want it when
             # editing level
             new_def.GameStage = new_def.ManufacturerGradeIndex
 
@@ -188,7 +188,7 @@ class BaseReplacementList(IReplacementList):
     @abstractmethod
     def get_basic_slots(cls) -> Mapping[DummyItem, BaseReplacementList.SlotNames]:
         """
-        Gets a dict mapping a category dummy item to the basic slots from the item's defintion data.
+        Gets a dict mapping a category dummy item to the item definition data's basic part slots.
 
         Returns:
             The basic slots dict.
@@ -198,10 +198,10 @@ class BaseReplacementList(IReplacementList):
     @abstractmethod
     def init_basic_slots(self, inv: WillowInventory) -> None:
         """
-        Initalizes the fields on this object which depend on the basic slots.
+        Initializes the fields on this object which depend on the basic slots.
 
         Args:
-            inv: The inventory item to initalize based off of.
+            inv: The inventory item to initialize based off of.
         """
         raise NotImplementedError
 

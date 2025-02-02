@@ -37,7 +37,7 @@ __all__: tuple[str, ...] = (
 
 reopen_inv_option = BoolOption(
     "Reopen Inventory After Editing",
-    True,
+    False,
     description="If to re-open your inventory after you finish editing an item.",
 )
 
@@ -101,4 +101,4 @@ def show_part_menu(item: WillowInventory, replacements: Sequence[WillowInventory
     )
 
 
-options: list[BaseOption] = [reopen_inv_option]
+options: tuple[BaseOption, ...] = (reopen_inv_option,)

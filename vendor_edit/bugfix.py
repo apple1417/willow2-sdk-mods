@@ -1,6 +1,6 @@
 from typing import Any
 
-from mods_base import hook
+from mods_base import HookType, hook
 from unrealsdk.hooks import Block
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
@@ -53,4 +53,4 @@ def end_finish_compare_iotd(*_: Any) -> None:
     block_switch_to_panels.disable()
 
 
-hooks = [on_finish_compare_iotd, end_finish_compare_iotd]
+hooks: tuple[HookType, ...] = (on_finish_compare_iotd, end_finish_compare_iotd)

@@ -147,7 +147,7 @@ def handle_menu_input(
             return None
 
 
-# If we immediately opening the edit menu, closing it compeltely loses focus and you lose all
+# If we immediately opening the edit menu, closing it completely loses focus and you lose all
 # control. Instead we just cache this item for a split second, until after the `OnClose` call.
 _item_to_edit: WillowInventory | None = None
 

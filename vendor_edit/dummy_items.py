@@ -44,6 +44,11 @@ def _get_cash_manufacturer() -> InventoryBalanceDefinition:
     return inner
 
 
+SPAWN_FROM_BAL_DEF = unrealsdk.find_class(
+    "ItemPool",
+).ClassDefaultObject.SpawnBalancedInventoryFromInventoryBalanceDefinition
+
+
 @dataclass(frozen=True)
 class DummyItemMixin:
     display_name: str
@@ -121,9 +126,7 @@ class DummyItemMixin:
         Args:
             owner: The pawn to set as the item's owner.
         """
-        _, spawned = unrealsdk.find_class(
-            "ItemPool",
-        ).ClassDefaultObject.SpawnBalancedInventoryFromInventoryBalanceDefinition(
+        _, spawned = SPAWN_FROM_BAL_DEF(
             InvBalanceDefinition=self.bal_def,
             Quantity=1,
             GameStage=1,
@@ -191,6 +194,7 @@ class DummyItem(DummyItemMixin, Enum):
             The relevant enum value.
         """
         for entry in cls:
+            # Since we lazily construct objects, we don't want to compare against entry.bal_def
             if entry.obj_name.lower() == bal.Name.lower():
                 return entry
         raise ValueError(f"Couldn't find dummy item for balance: {bal}")
