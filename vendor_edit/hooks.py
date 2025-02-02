@@ -7,14 +7,13 @@ from mods_base import (
     KeybindOption,
     hook,
 )
-from ui_utils import clipboard_copy, show_chat_message
+from ui_utils import clipboard_copy, clipboard_paste, show_chat_message
 from unrealsdk import logging
 from unrealsdk.hooks import Block, Type, Unset, prevent_hooking_direct_calls
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from .editor import EBackButtonScreen, open_editor_menu
-from .item_codes import get_item_code
-from .spawner import open_spawner_menu
+from .item_codes import get_item_code, spawn_item_from_code
 
 type StatusMenuExGFxMovie = UObject
 type WillowInventory = UObject
@@ -29,18 +28,15 @@ edit_bind = KeybindOption(
     "F9",
     description="While in your inventory, press this key on an item to start editing.",
 )
-spawn_bind = KeybindOption(
-    "Spawn Item",
-    "F10",
-    description=(
-        "While in your inventory, press this key to spawn a brand new item, which you'll get to"
-        " configure."
-    ),
-)
 copy_bind = KeybindOption(
     "Copy Code",
-    "F11",
+    "F10",
     description="While in your inventory, press this key to copy an item's code.",
+)
+paste_bind = KeybindOption(
+    "Paste Code",
+    "F11",
+    description="While in your inventory, press this key to paste an item code.",
 )
 
 # The actual SetInventoryTooltipsText implementation is very complex. Rather than replicating, just
@@ -70,19 +66,19 @@ def start_update_tooltips(
             ),
         )
 
-    if spawn_bind.value is not None:
-        _pending_extra_tooltips.append(
-            obj.ColorizeTooltipText(
-                f"[{spawn_bind.value}] {spawn_bind.display_name}",
-                bDisabled=False,
-            ),
-        )
-
     if copy_bind.value is not None:
         _pending_extra_tooltips.append(
             obj.ColorizeTooltipText(
                 f"[{copy_bind.value}] {copy_bind.display_name}",
                 bDisabled=inv is None,
+            ),
+        )
+
+    if paste_bind.value is not None:
+        _pending_extra_tooltips.append(
+            obj.ColorizeTooltipText(
+                f"[{paste_bind.value}] {paste_bind.display_name}",
+                bDisabled=False,
             ),
         )
 
@@ -143,10 +139,10 @@ def handle_menu_input(
     match key, event:
         case edit_bind.value, EInputEvent.IE_Released:
             return handle_edit_press(obj)
-        case spawn_bind.value, EInputEvent.IE_Released:
-            return handle_spawn_press(obj)
         case copy_bind.value, EInputEvent.IE_Released:
             return handle_copy_press(obj)
+        case paste_bind.value, EInputEvent.IE_Released:
+            return handle_paste_press(obj)
         case _:
             return None
 
@@ -187,27 +183,6 @@ def on_close_to_edit(*_: Any) -> None:
         _item_to_edit = None
 
 
-def handle_spawn_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
-    """
-    Handles a "Spawn Item" press.
-
-    Args:
-        obj: The current inventory movie object.
-    Returns:
-        The hook's return value.
-    """
-    on_close_to_spawn.enable()
-    obj.Hide()
-    return Block, True
-
-
-@hook("WillowGame.StatusMenuExGFxMovie:OnClose", Type.POST)
-def on_close_to_spawn(*_: Any) -> None:
-    on_close_to_spawn.disable()
-
-    open_spawner_menu()
-
-
 def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
     """
     Handles a "Copy Code" press.
@@ -231,5 +206,36 @@ def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | N
     return Block, True
 
 
-hooks: list[HookType] = [start_update_tooltips, stop_update_tooltips, handle_menu_input]
-options: list[BaseOption] = [edit_bind, spawn_bind, copy_bind]
+def handle_paste_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
+    """
+    Handles a "Paste Code" press.
+
+    Args:
+        obj: The current inventory movie object.
+    Returns:
+        The hook's return value.
+    """
+    code = clipboard_paste()
+    if code is not None:
+        owner = obj.WPCOwner.Pawn
+        item = spawn_item_from_code(code, owner)
+        if item is not None:
+            owner.InvManager.AddInventoryToBackpack(item)
+
+            global _item_to_edit
+            _item_to_edit = item
+            on_close_to_edit.enable()
+
+            obj.Hide()
+            return Block, True
+
+    show_chat_message(
+        "Couldn't find valid item code in clipboard",
+        user="[Vendor Edit]",
+        timestamp=None,
+    )
+    return None
+
+
+hooks: tuple[HookType, ...] = (start_update_tooltips, stop_update_tooltips, handle_menu_input)
+options: tuple[BaseOption, ...] = (edit_bind, copy_bind, paste_bind)
