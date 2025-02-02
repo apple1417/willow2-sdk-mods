@@ -14,7 +14,6 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from .editor import EBackButtonScreen, open_editor_menu
 from .item_codes import get_item_code
-from .replacement_lists import can_create_replacements
 from .spawner import open_spawner_menu
 
 type StatusMenuExGFxMovie = UObject
@@ -67,7 +66,7 @@ def start_update_tooltips(
         _pending_extra_tooltips.append(
             obj.ColorizeTooltipText(
                 f"[{edit_bind.value}] {edit_bind.display_name}",
-                bDisabled=inv is None or not can_create_replacements(args.WInv),
+                bDisabled=inv is None,
             ),
         )
 
@@ -168,9 +167,6 @@ def handle_edit_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | N
     """
     item = obj.InventoryPanel.GetSelectedThing()
     if item is None:
-        return None
-
-    if not can_create_replacements(item):
         return None
 
     global _item_to_edit

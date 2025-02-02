@@ -46,9 +46,6 @@ def open_editor_menu(item: WillowInventory) -> None:
     """
     Opens the editor menu for the given item.
 
-    Calling code should previously have checked `can_create_replacements()` to make sure this item
-    is valid.
-
     Args:
         item: The item to edit.
     """

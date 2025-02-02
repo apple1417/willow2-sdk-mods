@@ -6,7 +6,6 @@ from . import vendor_movie
 from .dummy_items import DummyItem
 from .editor import open_editor_menu, reopen_inventory
 from .item_codes import spawn_item_from_code
-from .replacement_lists import can_create_replacements
 
 type WillowInventory = UObject
 
@@ -33,12 +32,7 @@ def show_manufacturer_list() -> None:
                 item = spawn_item_from_code(code, owner)
                 if item is not None:
                     owner.InvManager.AddInventoryToBackpack(item)
-
-                    # We may have pasted an item which we're not able to edit
-                    if can_create_replacements(item):
-                        open_editor_menu(item)
-                    else:
-                        reopen_inventory()
+                    open_editor_menu(item)
                     return
 
             show_chat_message(

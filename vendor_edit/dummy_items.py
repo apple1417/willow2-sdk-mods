@@ -166,15 +166,16 @@ class DummyItem(DummyItemMixin, Enum):
     GRENADE_TRIGGER = "Trigger", "grenade_trigger"
     GRENADE_ACCESSORY = "Accessory", "grenade_accessory"
     GRENADE_DAMAGE = "Damage", "grenade_damage"
-    BLAST_RADIUS = "Blast Radius", "grenade_blast_radius"
-    CHILD_COUNT = "Child Count", "grenade_child_count"
-    STATUS_DAMAGE = "Status Damage", "grenade_status_damage"
+    GRENADE_BLAST_RADIUS = "Blast Radius", "grenade_blast_radius"
+    GRENADE_CHILD_COUNT = "Child Count", "grenade_child_count"
+    GRENADE_STATUS_DAMAGE = "Status Damage", "grenade_status_damage"
     # ================
     COM_SPECIALIZATION = "Specialization", "com_specialization"
     COM_PRIMARY = "Primary", "com_primary"
     COM_SECONDARY = "Secondary", "com_secondary"
     COM_PENALTY = "Penalty", "com_penalty"
     # ================
+    RELIC_BODY = "Body", "relic_body"
     RELIC_UPGRADE = "Upgrade", "relic_upgrade"
     # ================
     PASTE_CODE = "Paste Code", "paste_code"

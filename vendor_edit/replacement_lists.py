@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, overload
 
 import unrealsdk
-from unrealsdk.unreal import UObject, WeakPointer, WrappedStruct
+from unrealsdk.unreal import UClass, UObject, WeakPointer, WrappedStruct
 
 from .dummy_items import DummyItem
 
@@ -23,32 +23,7 @@ type ItemDefinitionData = WrappedStruct
 type WeaponDefinitionData = WrappedStruct
 
 
-__all__: tuple[str, ...] = (
-    "can_create_replacements",
-    "create_replacement_list",
-)
-
-WILLOW_WEAPON = unrealsdk.find_class("WillowWeapon")
-WILLOW_SHIELD = unrealsdk.find_class("WillowShield")
-
-
-def can_create_replacements(item: WillowInventory) -> bool:
-    """
-    Checks if we support creating replacements for the given item.
-
-    Args:
-        item: The item to check.
-    Returns:
-        True if replacements are supported, and `create_replacement_list()` may be called.
-    """
-    cls = item.Class
-    return any(
-        cls._inherits(allowed_class)
-        for allowed_class in (
-            WILLOW_WEAPON,
-            WILLOW_SHIELD,
-        )
-    )
+__all__: tuple[str, ...] = ("create_replacement_list",)
 
 
 def create_replacement_list(item: WillowInventory) -> IReplacementList:
@@ -61,10 +36,17 @@ def create_replacement_list(item: WillowInventory) -> IReplacementList:
         The new replacement list.
     """
     cls = item.Class
-    if cls._inherits(WILLOW_WEAPON):
-        return WeaponReplacements(item)
-    if cls._inherits(WILLOW_SHIELD):
-        return ShieldReplacements(item)
+    for replacement_class in (
+        WeaponReplacements,
+        ShieldReplacements,
+        GrenadeReplacements,
+        COMReplacements,
+        ArtifactReplacements,
+        # Item must be last since the others subclass it
+        ItemReplacements,
+    ):
+        if cls._inherits(replacement_class.UCLASS):
+            return replacement_class(item)
 
     raise ValueError(f"Unable to create replacement list for {item}")
 
@@ -102,6 +84,8 @@ class BaseReplacementList(IReplacementList):
 
     MANUFACTURER: ClassVar[SlotNames] = SlotNames("manufacturers", "ManufacturerDefinition")
     LEVEL: ClassVar[SlotNames] = SlotNames("levels", "ManufacturerGradeIndex")
+
+    UCLASS: ClassVar[UClass]
 
     inv: WeakPointer[WillowInventory]
 
@@ -276,6 +260,8 @@ class WeaponReplacements(BaseReplacementList):
         ),
     }
 
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowWeapon")
+
     bodies: set[WeaponPartDefinition]
     grips: set[WeaponPartDefinition]
     barrels: set[WeaponPartDefinition]
@@ -329,12 +315,6 @@ class ItemReplacements(BaseReplacementList):
     class ExtendedSlotNames(BaseReplacementList.SlotNames):
         part_list: str
         item_definition: str
-
-    # Set this to our derived type
-    @classmethod
-    @abstractmethod
-    def get_basic_slots(cls) -> Mapping[DummyItem, ItemReplacements.ExtendedSlotNames]:
-        raise NotImplementedError
 
     ALPHA: ClassVar[ExtendedSlotNames] = ExtendedSlotNames(
         "alpha",
@@ -390,6 +370,21 @@ class ItemReplacements(BaseReplacementList):
         "MaterialPartData",
         "MaterialParts",
     )
+
+    BASIC_SLOTS: ClassVar[dict[DummyItem, ItemReplacements.ExtendedSlotNames]] = {
+        DummyItem.ALPHA: ALPHA,
+        DummyItem.BETA: BETA,
+        DummyItem.GAMMA: GAMMA,
+        DummyItem.DELTA: DELTA,
+        DummyItem.EPSILON: EPSILON,
+        DummyItem.ZETA: ZETA,
+        DummyItem.ETA: ETA,
+        DummyItem.THETA: THETA,
+        DummyItem.MATERIAL: MATERIAL,
+    }
+
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowItem")
+
     alpha: set[ItemPartDefinition]
     beta: set[ItemPartDefinition]
     gamma: set[ItemPartDefinition]
@@ -402,6 +397,10 @@ class ItemReplacements(BaseReplacementList):
 
     def __init__(self, inv: WillowInventory) -> None:
         super().__init__(inv)
+
+    @classmethod
+    def get_basic_slots(cls) -> Mapping[DummyItem, ItemReplacements.ExtendedSlotNames]:
+        return cls.BASIC_SLOTS
 
     def init_basic_slots(self, inv: WillowInventory) -> None:
         balance = (def_data := inv.DefinitionData).BalanceDefinition
@@ -462,6 +461,52 @@ class ShieldReplacements(ItemReplacements):
         DummyItem.THETA: ItemReplacements.THETA,
     }
 
-    @classmethod
-    def get_basic_slots(cls) -> Mapping[DummyItem, ItemReplacements.ExtendedSlotNames]:
-        return cls.BASIC_SLOTS
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowShield")
+
+
+class GrenadeReplacements(ItemReplacements):
+    BASIC_SLOTS: ClassVar[dict[DummyItem, ItemReplacements.ExtendedSlotNames]] = {
+        DummyItem.GRENADE_ACCESSORY: ItemReplacements.DELTA,
+        DummyItem.GRENADE_BLAST_RADIUS: ItemReplacements.ZETA,
+        DummyItem.GRENADE_CHILD_COUNT: ItemReplacements.ETA,
+        DummyItem.GRENADE_DAMAGE: ItemReplacements.EPSILON,
+        DummyItem.GRENADE_DELIVERY: ItemReplacements.BETA,
+        DummyItem.GRENADE_PAYLOAD: ItemReplacements.ALPHA,
+        DummyItem.GRENADE_STATUS_DAMAGE: ItemReplacements.THETA,
+        DummyItem.GRENADE_TRIGGER: ItemReplacements.GAMMA,
+        DummyItem.MATERIAL: ItemReplacements.MATERIAL,
+    }
+
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowGrenadeMod")
+
+
+class COMReplacements(ItemReplacements):
+    BASIC_SLOTS: ClassVar[dict[DummyItem, ItemReplacements.ExtendedSlotNames]] = {
+        DummyItem.COM_SPECIALIZATION: ItemReplacements.ALPHA,
+        DummyItem.COM_PRIMARY: ItemReplacements.BETA,
+        DummyItem.COM_SECONDARY: ItemReplacements.GAMMA,
+        DummyItem.COM_PENALTY: ItemReplacements.MATERIAL,
+        DummyItem.DELTA: ItemReplacements.DELTA,
+        DummyItem.EPSILON: ItemReplacements.EPSILON,
+        DummyItem.ZETA: ItemReplacements.ZETA,
+        DummyItem.ETA: ItemReplacements.ETA,
+        DummyItem.THETA: ItemReplacements.THETA,
+    }
+
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowClassMod")
+
+
+class ArtifactReplacements(ItemReplacements):
+    BASIC_SLOTS: ClassVar[dict[DummyItem, ItemReplacements.ExtendedSlotNames]] = {
+        DummyItem.RELIC_BODY: ItemReplacements.ETA,
+        DummyItem.RELIC_UPGRADE: ItemReplacements.THETA,
+        DummyItem.ALPHA: ItemReplacements.ALPHA,
+        DummyItem.BETA: ItemReplacements.BETA,
+        DummyItem.GAMMA: ItemReplacements.GAMMA,
+        DummyItem.DELTA: ItemReplacements.DELTA,
+        DummyItem.EPSILON: ItemReplacements.EPSILON,
+        DummyItem.ZETA: ItemReplacements.ZETA,
+        DummyItem.MATERIAL: ItemReplacements.MATERIAL,
+    }
+
+    UCLASS: ClassVar[UClass] = unrealsdk.find_class("WillowArtifact")
