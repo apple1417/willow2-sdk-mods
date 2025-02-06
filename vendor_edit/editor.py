@@ -1,9 +1,11 @@
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from contextlib import suppress
+from typing import TYPE_CHECKING, Any
 
 import unrealsdk
-from mods_base import BaseOption, BoolOption, get_pc
-from unrealsdk.unreal import UObject
+from mods_base import BaseOption, BoolOption, get_pc, hook
+from unrealsdk.hooks import Type
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import vendor_movie
 from .dummy_items import DummyItem
@@ -23,10 +25,22 @@ if TYPE_CHECKING:
         CS_Challenges = auto()
         CS_MAX = auto()
 
+    class EQuickWeaponSlot(UnrealEnum):
+        QuickSelectNone = auto()
+        QuickSelectUp = auto()
+        QuickSelectDown = auto()
+        QuickSelectLeft = auto()
+        QuickSelectRight = auto()
+        EQuickWeaponSlot_MAX = auto()
+
 else:
     EBackButtonScreen = unrealsdk.find_enum("EBackButtonScreen")
+    EQuickWeaponSlot = unrealsdk.find_enum("EQuickWeaponSlot")
 
+type ItemDefinitionData = WrappedStruct
 type WillowInventory = UObject
+
+WILLOW_WEAPON = unrealsdk.find_class("WillowWeapon")
 
 __all__: tuple[str, ...] = (
     "open_editor_menu",
@@ -86,12 +100,9 @@ def show_part_menu(item: WillowInventory, replacements: Sequence[WillowInventory
         # We want this so that any other systems (e.g. Sanity Saver) treat this as a new item
         def_data.UniqueId = 0
 
-        item.InitializeFromDefinitionData(
-            NewDefinitionData=def_data,
-            InAdditionalQueryInterfaceSource=item.Owner,
-            bForceSelectNameParts=True,
-        )
-        show_categories_menu(item)
+        new_item = replace_item_def_data(item, def_data)
+
+        show_categories_menu(new_item)
 
     vendor_movie.show(
         items=replacements,
@@ -99,6 +110,103 @@ def show_part_menu(item: WillowInventory, replacements: Sequence[WillowInventory
         on_purchase=on_purchase,
         on_cancel=lambda: show_categories_menu(item),
     )
+
+
+def replace_item_def_data(
+    item: WillowInventory,
+    def_data: ItemDefinitionData,
+) -> WillowInventory:
+    """
+    Replaces an item from the player's inventory with a new one using the given def data..
+
+    Args:
+        item: The base item to replace.
+        def_data: The new definition data to use.
+    Returns:
+        The new item.
+    """
+
+    # So the inventory is implemented in an insane way.
+    # Basically any time items move, they're completely deleted and recreated from their def data.
+    # This means we need to be very careful about what we actually have a reference to, and what
+    # order we do everything in.
+
+    # Firstly, gather all the data off of the original item that we need. Some of this will get
+    # changed as soon as we remove it.
+    is_weapon = False
+    quick_slot = EQuickWeaponSlot.QuickSelectNone
+    with suppress(AttributeError):
+        quick_slot = item.QuickSelectSlot
+        is_weapon = True
+    quantity = 1
+    with suppress(AttributeError):
+        quantity = item.Quantity
+    mark = item.Mark
+    was_ready = item.bReadied
+
+    inv_manager = (owner := item.Owner).InvManager
+
+    # Now remove the original item
+    inv_manager.RemoveFromInventory(item)
+
+    # Another awkward part about items constantly getting recreated is it means we can't cleanly get
+    # a reference to the new item, since anything we put in will change.
+    # Instead we need this digusting hook abuse.
+    created_item: UObject | None = None  # type: ignore
+
+    @hook("Engine.WillowInventory:SetMark", Type.POST)
+    def inv_set_mark(
+        obj: UObject,
+        _args: WrappedStruct,
+        _ret: Any,
+        _func: BoundFunction,
+    ) -> None:
+        nonlocal created_item
+        created_item = obj
+
+    try:
+        inv_set_mark.enable()
+
+        # Explictly make sure *not* to ready the item yet, even if we needed it
+        # These calls will create a new item, to be caught by the hook
+        if is_weapon:
+            inv_manager.ClientAddWeaponToBackpack(
+                DefinitionData=def_data,
+                Mark=mark,
+                bReadyAfterAdd=False,
+            )
+        else:
+            inv_manager.ClientAddItemToBackpack(
+                DefinitionData=def_data,
+                Quantity=quantity,
+                Mark=mark,
+                bReadyAfterAdd=False,
+            )
+
+        if was_ready:
+            # Type checker doesn't realize this may have changed
+            if TYPE_CHECKING:
+                created_item = object()  # type: ignore
+            if created_item is None:
+                raise RuntimeError("failed to spawn new item")
+
+            # This call also makes a new item. The reference we currenly have will get queued for
+            # deletion after this call, we want a reference to the new item this creates in the
+            # following code. Luckily, turns out we can use the exact same code.
+
+            # We're free to pass a quick slot even if this is an item
+            inv_manager.ReadyBackpackInventory(created_item, quick_slot)
+    finally:
+        inv_set_mark.disable()
+
+    if TYPE_CHECKING:
+        created_item = object()  # type: ignore
+    if created_item is None:
+        raise RuntimeError("failed to spawn new item")
+
+    # Finally fix up the owner, this is used by the replacement lists
+    created_item.Owner = owner
+    return created_item
 
 
 options: tuple[BaseOption, ...] = (reopen_inv_option,)
