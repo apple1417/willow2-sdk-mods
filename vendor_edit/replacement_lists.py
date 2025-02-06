@@ -459,7 +459,7 @@ class ItemReplacements(BaseReplacementList):
         definition: ItemDefinition,
     ) -> None:
         """
-        Initalizes the basic slots with data pulled from the item definition.
+        Initializes the basic slots with data pulled from the item definition.
 
         Args:
             def_data: The current items's def data.
@@ -490,7 +490,7 @@ class ItemReplacements(BaseReplacementList):
         part_list_collection: ItemPartListCollectionDefinition,
     ) -> None:
         """
-        Initalizes the basic slots with data pulled from the part list collecton.
+        Initializes the basic slots with data pulled from the part list collection.
 
         Args:
             def_data: The current items's def data.

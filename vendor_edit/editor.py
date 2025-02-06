@@ -115,7 +115,7 @@ def show_part_menu(
                 DummyItem.LEVEL,
             )
         else:
-            # Otherwise go back to the catgory menu
+            # Otherwise go back to the category menu
             show_categories_menu(new_item)
 
     vendor_movie.show(
@@ -186,7 +186,7 @@ def replace_item_def_data(
     try:
         inv_set_mark.enable()
 
-        # Explictly make sure *not* to ready the item yet, even if we needed it
+        # Explicitly make sure *not* to ready the item yet, even if we needed it
         # These calls will create a new item, to be caught by the hook
         if is_weapon:
             inv_manager.ClientAddWeaponToBackpack(
@@ -210,9 +210,9 @@ def replace_item_def_data(
 
         # If the item was ready, but we increased its level, we might no longer be able to ready it
         if was_ready and created_item.CanBeUsedBy(owner):
-            # This call also makes a new item. The reference we currenly have will get queued for
+            # This call also makes a new item. The reference we currently have will get queued for
             # deletion after this call, we want a reference to the new item this creates in the
-            # following code. Luckily, turns out we can use the exact same code.
+            # following code. Luckily, turns out we can use the exact same hook.
 
             # We're free to pass a quick slot even if this is an item
             inv_manager.ReadyBackpackInventory(created_item, quick_slot)
