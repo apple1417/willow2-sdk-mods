@@ -83,7 +83,7 @@ def show_categories_menu(item: WillowInventory) -> None:
     def on_purchase(purchased: WillowInventory) -> None:
         slot = DummyItem.from_balance(purchased.DefinitionData.BalanceDefinition)
 
-        show_part_menu(item, replacements.create_replacements_for_slot(slot))
+        show_part_menu(item, replacements.create_replacements_for_slot(slot), slot)
 
     vendor_movie.show(
         items=[slot.spawn(item.Owner) for slot in replacements.get_slots()],
@@ -93,7 +93,11 @@ def show_categories_menu(item: WillowInventory) -> None:
     )
 
 
-def show_part_menu(item: WillowInventory, replacements: Sequence[WillowInventory]) -> None:
+def show_part_menu(
+    item: WillowInventory,
+    replacements: Sequence[WillowInventory],
+    slot: DummyItem,
+) -> None:
     def on_purchase(purchased: WillowInventory) -> None:
         def_data = purchased.DefinitionData
         # Setting unique id to 0 causes the game to re-randomize it
@@ -102,7 +106,17 @@ def show_part_menu(item: WillowInventory, replacements: Sequence[WillowInventory
 
         new_item = replace_item_def_data(item, def_data)
 
-        show_categories_menu(new_item)
+        if slot is DummyItem.LEVEL:
+            # Editing level is a bit of an iterative process, so immediately reopen the level menu
+            replacements = create_replacement_list(new_item)
+            show_part_menu(
+                new_item,
+                replacements.create_replacements_for_slot(DummyItem.LEVEL),
+                DummyItem.LEVEL,
+            )
+        else:
+            # Otherwise go back to the catgory menu
+            show_categories_menu(new_item)
 
     vendor_movie.show(
         items=replacements,
