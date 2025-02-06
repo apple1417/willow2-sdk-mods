@@ -12,13 +12,29 @@ from .dummy_items import DummyItem
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
+    from enum import auto
 
+    from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
+
+    class EPartReplacementMode(UnrealEnum):
+        EPRM_Additive = auto()
+        EPRM_Selective = auto()
+        EPRM_Complete = auto()
+        EPRM_MAX = auto()
+
+else:
+    EPartReplacementMode = unrealsdk.find_enum("EPartReplacementMode")
+
+
+type ItemDefinition = UObject
+type ItemPartDefinition = UObject
+type ManufacturerDefinition = UObject
+type WeaponPartDefinition = UObject
+type ItemPartListCollectionDefinition = UObject
 type WillowInventory = UObject
 type WillowItem = UObject
 type WillowWeapon = UObject
-type ManufacturerDefinition = UObject
-type ItemPartDefinition = UObject
-type WeaponPartDefinition = UObject
+
 type ItemDefinitionData = WrappedStruct
 type WeaponDefinitionData = WrappedStruct
 
@@ -427,50 +443,89 @@ class ItemReplacements(BaseReplacementList):
             # Fall back to the basic one
             part_list_collection = balance.PartListCollection
 
+        # Easier for the following to work if all slots already have defaults
+        for slot_names in self.get_basic_slots().values():
+            setattr(self, slot_names.attr, [])
+
+        if definition is not None:
+            self.init_from_definition(def_data, definition)
+
+        if part_list_collection is not None:
+            self.init_from_part_list(def_data, part_list_collection)
+
+    def init_from_definition(
+        self,
+        def_data: ItemDefinitionData,
+        definition: ItemDefinition,
+    ) -> None:
+        """
+        Initalizes the basic slots with data pulled from the item definition.
+
+        Args:
+            def_data: The current items's def data.
+            definition: The item definition to init based off of.
+        """
+        for slot_names in self.get_basic_slots().values():
+            original_part = getattr(def_data, slot_names.def_data)
+            definition_part_list = getattr(definition, slot_names.item_definition)
+            if definition_part_list is None:
+                continue
+
+            setattr(
+                self,
+                slot_names.attr,
+                sorted(
+                    {
+                        part
+                        for part_slot in definition_part_list.WeightedParts
+                        if (part := part_slot.Part) != original_part
+                    },
+                    key=str,
+                ),
+            )
+
+    def init_from_part_list(
+        self,
+        def_data: ItemDefinitionData,
+        part_list_collection: ItemPartListCollectionDefinition,
+    ) -> None:
+        """
+        Initalizes the basic slots with data pulled from the part list collecton.
+
+        Args:
+            def_data: The current items's def data.
+            part_list_collection: The part list collection to init based off of.
+        """
+        replacement_mode = part_list_collection.PartReplacementMode
+
         for slot_names in self.get_basic_slots().values():
             original_part = getattr(def_data, slot_names.def_data)
 
-            # If the parts list collection exists, and defines any parts, treat them as an override
-            if part_list_collection is not None:
-                collection_part_list = getattr(part_list_collection, slot_names.part_list)
-                if collection_part_list.bEnabled:
-                    setattr(
-                        self,
-                        slot_names.attr,
-                        sorted(
-                            {
-                                part
-                                for part_slot in collection_part_list.WeightedParts
-                                if (part := part_slot.Part) != original_part
-                            },
-                            key=str,
-                        ),
-                    )
-                    continue
+            slot_list = getattr(self, slot_names.attr)
 
-            # No collection parts, fall back to those on the definition
-            if definition is not None:
-                definition_part_list = getattr(definition, slot_names.item_definition)
-                if definition_part_list is None:
-                    setattr(self, slot_names.attr, [])
-                    continue
+            if replacement_mode == EPartReplacementMode.EPRM_Complete:
+                slot_list[:] = []
 
-                setattr(
-                    self,
-                    slot_names.attr,
-                    sorted(
-                        {
-                            part
-                            for part_slot in definition_part_list.WeightedParts
-                            if (part := part_slot.Part) != original_part
-                        },
-                        key=str,
-                    ),
-                )
+            collection_part_list = getattr(part_list_collection, slot_names.part_list)
+            if not collection_part_list.bEnabled:
                 continue
 
-            # Didn't find any source of parts
-            setattr(self, slot_names.attr, [])
+            new_parts = sorted(
+                {
+                    part
+                    for part_slot in collection_part_list.WeightedParts
+                    if (part := part_slot.Part) != original_part
+                },
+                key=str,
+            )
+
+            match replacement_mode:
+                case EPartReplacementMode.EPRM_Additive:
+                    slot_list.extend(new_parts)
+                case EPartReplacementMode.EPRM_Selective | EPartReplacementMode.EPRM_Complete:
+                    slot_list[:] = new_parts
+                case _:
+                    pass
 
     @staticmethod
     def create_from_def_data(inv: WillowItem, def_data: ItemDefinitionData) -> WillowInventory:
