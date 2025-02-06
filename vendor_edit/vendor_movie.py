@@ -102,10 +102,14 @@ def show(
         raise RuntimeError("cannot show two vendor movies at once")
     any_movie_active = True
 
-    # For some reason, the game puts the very first item in the list aat the bottom, but leaves the
+    # Guard against calling code accidentally creating null objects - which can happen if unreal
+    # functions return None unexpectedly
+    pending_items = [i for i in items if i is not None]  # type: ignore
+
+    # For some reason, the game puts the very first item in the list at the bottom, but leaves the
     # rest in order - a list ABCDE displays BCDEA. Fix this up ourselves to have a more intuitive
     # interface.
-    pending_items = (items[-1], *items[:-1])
+    pending_items.insert(0, pending_items.pop())
 
     pending_iotd = iotd
     on_purchase_callback = on_purchase

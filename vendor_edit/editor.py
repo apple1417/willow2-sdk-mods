@@ -162,6 +162,11 @@ def replace_item_def_data(
 
     # Now remove the original item
     inv_manager.RemoveFromInventory(item)
+    # Gearbox making things difficult: the above works for all items, and equipped weapons, but not
+    # weapons in the backpack
+    if is_weapon:
+        inv_manager.RemoveInventoryFromBackpack(item)
+        inv_manager.UpdateBackpackInventoryCount()
 
     # Another awkward part about items constantly getting recreated is it means we can't cleanly get
     # a reference to the new item, since anything we put in will change.
@@ -197,13 +202,14 @@ def replace_item_def_data(
                 bReadyAfterAdd=False,
             )
 
-        if was_ready:
-            # Type checker doesn't realize this may have changed
-            if TYPE_CHECKING:
-                created_item = object()  # type: ignore
-            if created_item is None:
-                raise RuntimeError("failed to spawn new item")
+        # Type checker doesn't realize this may have changed
+        if TYPE_CHECKING:
+            created_item = object()  # type: ignore
+        if created_item is None:
+            raise RuntimeError("failed to spawn new item")
 
+        # If the item was ready, but we increased its level, we might no longer be able to ready it
+        if was_ready and created_item.CanBeUsedBy(owner):
             # This call also makes a new item. The reference we currenly have will get queued for
             # deletion after this call, we want a reference to the new item this creates in the
             # following code. Luckily, turns out we can use the exact same code.
