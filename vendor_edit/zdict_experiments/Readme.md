@@ -19,11 +19,10 @@ TPS, and AoDK, with duplicates between games removed. These were extracted from 
   
 
 `gen_dict.py` runs some stats over `unique_parts.txt` and generates an initial dictionary. The
-script seems to be a little non-deterministic (probably due to dict/set iteration order), so I saved
-my results in `zdict.wip.0`. We only use part names for the dict since most slots are parts, we
-expect modded items will mainly contain part replacements. We also expect modded parts to mostly
-follow the naming conventions as the game, so using all the existing parts is a good collection of
-training data.
+script does seems to be a little non-deterministic, but this won't really matter for long. We only
+use part names for the dict since most slots are parts, we expect modded items will mainly contain
+part replacements. We also expect modded parts to mostly follow the naming conventions as the game,
+so using all the existing parts is a good collection of training data.
 
 `constructor_to_replacements.py` parses a constructor save file, creates the uncompressed
 replacement buffers for each item, and writes them to `replacements.bin`. It uses the four `unique*`
@@ -62,8 +61,12 @@ the best encountered dictionaries along the way.
 the dictionary file was created. This is very specific to the exact wip files I had. I used this to
 try keep track of how the fuzzing was going.
 
-In total, I left the fuzzer running for ~40 hours. I saved the final dictionary it came up with in
-`zdict.wip.288`. The fuzzing gave the following results:
+In total, I left the fuzzer running for ~40 hours. `corpus.tar.lzma` contains the whole corpus
+folder it came up with, and `zdict.tar.zstd` includes all the dictionaries it made up along the way
+(except for `zdict.wip.0`, which was made by `gen_dict.py`). The final dictionary was
+`zdict.wip.288`.
+
+The fuzzing gave the following results:
 
 ![graph of dict size](fuzz_size.svg)
 ![graph of time to find improvements](fuzz_timing.svg)
