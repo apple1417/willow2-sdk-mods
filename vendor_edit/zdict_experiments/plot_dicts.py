@@ -4,7 +4,7 @@ import subprocess
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # pyright: ignore[reportMissingImports]
 
 RE_EVAL_OUTPUT = re.compile(r"^.+?: (\d+)/\d+$")
 

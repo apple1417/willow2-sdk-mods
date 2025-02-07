@@ -34,13 +34,13 @@ class UnpackResult(Enum):
     # Found a valid code, but the game itself still rejected it - most likely due to someone
     # manually changing the code's prefix.
     GAME_REJECTED_CODE = auto()
-    # Succesfully unpacked a weapon code
+    # Successfully unpacked a weapon code
     FULL_WEAPON = auto()
-    # Succesfully unpacked an item code
+    # Successfully unpacked an item code
     FULL_ITEM = auto()
-    # Succesfully unpacked a weapon code, but wasn't able to apply all the modded replacedments.
+    # Successfully unpacked a weapon code, but wasn't able to apply all the modded replacedments.
     PARTIAL_WEAPON = auto()
-    # Succesfully unpacked an item code, but wasn't able to apply all the modded replacedments.
+    # Successfully unpacked an item code, but wasn't able to apply all the modded replacedments.
     PARTIAL_ITEM = auto()
 
 
