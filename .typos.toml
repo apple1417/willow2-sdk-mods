@@ -26,6 +26,8 @@ extend-exclude = [
     "UserFeedback",
 
     "command_extensions/file_parser_tests/*.test_in",
+    "vendor_edit/zdict_experiments",
+    "vendor_edit/zdict",
 ]
 
 [default]

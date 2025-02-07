@@ -19,3 +19,8 @@ If:
     PathMatch: src/.*\.in
 Diagnostics:
     Suppress: expected_expression
+---
+If:
+    PathMatch: vendor_edit/modded_code_experiments/eval.cpp
+CompileFlags:
+    Add: [-std=c++20]
