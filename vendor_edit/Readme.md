@@ -1,5 +1,8 @@
 ## Changelog
 
+### Vendor Edit v4
+- Added support for modded item codes.
+
 ### Vendor Edit v3
 - Reworked how the possible parts on items are selected, fixing that many items would show
   impossible parts which would cause them to get sanity checked (e.g. you could set a custom payload
