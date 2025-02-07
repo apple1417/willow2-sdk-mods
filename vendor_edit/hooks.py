@@ -1,8 +1,10 @@
 from typing import Any
 
+import unrealsdk
 from mods_base import (
     BaseOption,
     EInputEvent,
+    Game,
     HookType,
     KeybindOption,
     hook,
@@ -13,7 +15,7 @@ from unrealsdk.hooks import Block, Type, Unset, prevent_hooking_direct_calls
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from .editor import EBackButtonScreen, open_editor_menu
-from .item_codes import get_item_code, spawn_item_from_code
+from .item_codes import UnpackResult, pack_item_code, unpack_item_code
 
 type StatusMenuExGFxMovie = UObject
 type WillowInventory = UObject
@@ -197,13 +199,43 @@ def handle_copy_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | N
         return None
 
     name = item.GetShortHumanReadableName()
-    code = get_item_code(item)
+    code = pack_item_code(item.DefinitionData)
     clipboard_copy(code)
 
     logging.info(f"Serial code for {name}: {code}")
     show_chat_message(f"Copied code for {name}", user="[Vendor Edit]", timestamp=None)
 
     return Block, True
+
+
+def chat_error_for_item_paste(result: UnpackResult) -> None:
+    """
+    Writes the error message (if any) for the given unpack result to chat.
+
+    Args:
+        result: The result of trying to unpack an item code.
+    """
+    match result:
+        case UnpackResult.FULL_WEAPON | UnpackResult.FULL_ITEM:
+            return
+
+        case UnpackResult.NO_MATCH:
+            msg = "Couldn't find an item code in your clipboard"
+        case UnpackResult.WRONG_GAME:
+            msg = f"Item code was not for {Game.get_current().name}"
+        case UnpackResult.MALFORMED_CODE | UnpackResult.GAME_REJECTED_CODE:
+            msg = "Item code was corrupt"
+        case UnpackResult.PARTIAL_WEAPON | UnpackResult.PARTIAL_ITEM:
+            msg = (
+                "Some modded parts were not found, and were ignored. Are you running the right"
+                " mods?"
+            )
+
+    show_chat_message(msg, user="[Vendor Edit]", timestamp=None)
+
+
+CREATE_WEAPON_FROM_DEF = unrealsdk.find_class("WillowWeapon").ClassDefaultObject.CreateWeaponFromDef
+CREATE_ITEM_FROM_DEF = unrealsdk.find_class("WillowItem").ClassDefaultObject.CreateItemFromDef
 
 
 def handle_paste_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | None:
@@ -216,25 +248,42 @@ def handle_paste_press(obj: StatusMenuExGFxMovie) -> tuple[type[Block], bool] | 
         The hook's return value.
     """
     code = clipboard_paste()
-    if code is not None:
-        owner = obj.WPCOwner.Pawn
-        item = spawn_item_from_code(code, owner)
-        if item is not None:
-            owner.InvManager.AddInventoryToBackpack(item)
+    if code is None:
+        chat_error_for_item_paste(UnpackResult.NO_MATCH)
+        return Block, True
 
-            global _item_to_edit
-            _item_to_edit = item
-            on_close_to_edit.enable()
+    result, def_data = unpack_item_code(code)
+    chat_error_for_item_paste(result)
 
-            obj.Hide()
+    owner = obj.WPCOwner.Pawn
+
+    match result:
+        case UnpackResult.FULL_WEAPON | UnpackResult.PARTIAL_WEAPON:
+            item = CREATE_WEAPON_FROM_DEF(
+                NewWeaponDef=def_data,
+                PlayerOwner=owner,
+                bForceSelectNameParts=True,
+            )
+        case UnpackResult.FULL_ITEM | UnpackResult.PARTIAL_ITEM:
+            item = CREATE_ITEM_FROM_DEF(
+                NewItemDef=def_data,
+                PlayerOwner=owner,
+                NewQuantity=1,
+                bForceSelectNameParts=True,
+            )
+
+        case _:
             return Block, True
 
-    show_chat_message(
-        "Couldn't find valid item code in clipboard",
-        user="[Vendor Edit]",
-        timestamp=None,
-    )
-    return None
+    owner.InvManager.AddInventoryToBackpack(item)
+    item.Owner = owner
+
+    global _item_to_edit
+    _item_to_edit = item
+    on_close_to_edit.enable()
+
+    obj.Hide()
+    return Block, True
 
 
 hooks: tuple[HookType, ...] = (start_update_tooltips, stop_update_tooltips, handle_menu_input)

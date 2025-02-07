@@ -1,49 +1,457 @@
 import binascii
 import re
 import struct
+import zlib
 from base64 import b64decode, b64encode
+from dataclasses import dataclass
+from enum import Enum, auto
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import unrealsdk
-from mods_base import Game
-from unrealsdk.unreal import BoundFunction, UObject
+from mods_base import Game, open_in_mod_dir
+from unrealsdk import logging
+from unrealsdk.unreal import UObject, WrappedStruct
 
-type WillowInventory = UObject
-type WillowPawn = UObject
+type ItemDefinitionData = WrappedStruct
+type WeaponDefinitionData = WrappedStruct
 
-__all__: tuple[str, ...] = ("get_item_code",)
+__all__: tuple[str, ...] = (
+    "UnpackResult",
+    "pack_item_code",
+    "unpack_item_code",
+)
 
 
-CODE_PREFIX: str = {
+class UnpackResult(Enum):
+    # Couldn't match an item code in the provided string
+    NO_MATCH = auto()
+    # The item code started with the wrong game prefix.
+    WRONG_GAME = auto()
+    # Found an item code, but it was malformed in one way or another - invalid b64, too short, bad
+    # checksum, etc.
+    MALFORMED_CODE = auto()
+    # Found a valid code, but the game itself still rejected it - most likely due to someone
+    # manually changing the code's prefix.
+    GAME_REJECTED_CODE = auto()
+    # Succesfully unpacked a weapon code
+    FULL_WEAPON = auto()
+    # Succesfully unpacked an item code
+    FULL_ITEM = auto()
+    # Succesfully unpacked a weapon code, but wasn't able to apply all the modded replacedments.
+    PARTIAL_WEAPON = auto()
+    # Succesfully unpacked an item code, but wasn't able to apply all the modded replacedments.
+    PARTIAL_ITEM = auto()
+
+
+def unpack_item_code(
+    code: str,
+) -> tuple[UnpackResult, ItemDefinitionData | WeaponDefinitionData | None]:
+    """
+    Unpacks an item code into it's definition data struct.
+
+    Args:
+        code: The item code to unpack.
+    Returns:
+        A tuple of the result code, and either the unpacked def data on (partial) success, or None.
+    """
+    return _unpack_item_code_impl(code)
+
+
+def pack_item_code(def_data: ItemDefinitionData | WeaponDefinitionData) -> str:
+    """
+    Packs a definition data struct into an item code.
+
+    Args:
+        def_data: The def data struct.
+    Returns:
+        The item code.
+    """
+    return _pack_item_code_impl(def_data)
+
+
+# ==================================================================================================
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
+
+    class SerialNumberState(UnrealEnum):
+        SNS_Empty = auto()
+        SNS_Writing = auto()
+        SNS_Full = auto()
+        SNS_Reading = auto()
+        SNS_Encrypted = auto()
+        SNS_MAX = auto()
+
+else:
+    SerialNumberState = unrealsdk.find_enum("SerialNumberState")
+
+type InventorySerialNumber = WrappedStruct
+
+
+GAME_PREFIX = {
     Game.BL2: "BL2",
     Game.TPS: "BLOZ",
     Game.AoDK: "AODK",
 }.get(_game := Game.get_current(), _game.name or "")
 
+RE_GAME_PREFIX = re.compile("BL(OZ|TPS)" if _game is Game.TPS else GAME_PREFIX, flags=re.I)
+del _game
 
-def get_item_code(inv: WillowInventory) -> str:
+RE_ITEM_CODE = re.compile(
+    r"^(\w+)(?:\((.+?)\)|MODDED\[(.+?)\|(.+?)\])$",
+    flags=re.I,
+)
+
+
+WEAPON_DEF_DATA = unrealsdk.find_object(
+    "ScriptStruct",
+    "WillowGame.WillowWeaponTypes:WeaponDefinitionData",
+)
+
+ITEM_PACK, ITEM_UNPACK = (
+    (_tmp := unrealsdk.find_class("WillowItem").ClassDefaultObject).PackSerialNumber,
+    _tmp.UnpackSerialNumber,
+)
+WEAPON_PACK, WEAPON_UNPACK = (
+    (_tmp := unrealsdk.find_class("WillowWeapon").ClassDefaultObject).PackSerialNumber,
+    _tmp.UnpackSerialNumber,
+)
+del _tmp
+
+PEAK_IS_WEAPON = unrealsdk.find_class("WillowInventory").ClassDefaultObject.PeekIsWeapon
+
+
+@dataclass
+class FieldData:
+    name: str
+    mask: int
+    is_int: bool = False
+
+
+WEAPON_FIELDS = (
+    FieldData("WeaponTypeDefinition", 0x8000),
+    FieldData("BalanceDefinition", 0x4000),
+    FieldData("ManufacturerDefinition", 0x2000),
+    FieldData("ManufacturerGradeIndex", 0x1000, is_int=True),
+    FieldData("BodyPartDefinition", 0x0800),
+    FieldData("GripPartDefinition", 0x0400),
+    FieldData("BarrelPartDefinition", 0x0200),
+    FieldData("SightPartDefinition", 0x0100),
+    FieldData("StockPartDefinition", 0x0080),
+    FieldData("ElementalPartDefinition", 0x0040),
+    FieldData("Accessory1PartDefinition", 0x0020),
+    FieldData("Accessory2PartDefinition", 0x0010),
+    FieldData("MaterialPartDefinition", 0x0008),
+    FieldData("PrefixPartDefinition", 0x0004),
+    FieldData("TitlePartDefinition", 0x0002),
+    FieldData("GameStage", 0x0001, is_int=True),
+)
+
+ITEM_FIELDS = (
+    FieldData("ItemDefinition", 0x8000),
+    FieldData("BalanceDefinition", 0x4000),
+    FieldData("ManufacturerDefinition", 0x2000),
+    FieldData("ManufacturerGradeIndex", 0x1000, is_int=True),
+    FieldData("AlphaItemPartDefinition", 0x0800),
+    FieldData("BetaItemPartDefinition", 0x0400),
+    FieldData("GammaItemPartDefinition", 0x0200),
+    FieldData("DeltaItemPartDefinition", 0x0100),
+    FieldData("EpsilonItemPartDefinition", 0x0080),
+    FieldData("ZetaItemPartDefinition", 0x0040),
+    FieldData("EtaItemPartDefinition", 0x0020),
+    FieldData("ThetaItemPartDefinition", 0x0010),
+    FieldData("MaterialItemPartDefinition", 0x0008),
+    FieldData("PrefixItemNamePartDefinition", 0x0004),
+    FieldData("TitleItemNamePartDefinition", 0x0002),
+    FieldData("GameStage", 0x0001, is_int=True),
+)
+
+MODDED_CODE_VERSION = b"\x00"
+
+with open_in_mod_dir(Path(__file__).parent / "zdict", binary=True) as file:
+    _zdict = file.read()
+
+_BASE_COMPRESSOR = zlib.compressobj(level=zlib.Z_BEST_COMPRESSION, zdict=_zdict)
+_BASE_DECOMPRESSOR = zlib.decompressobj(zdict=_zdict)
+
+del _zdict
+
+
+def compress(data: bytes) -> bytes:
     """
-    Gets the save-editor compatible item code for the given item.
+    Compresses a byte buffer using the modded code settings.
 
     Args:
-        inv: The inventory item to get the code of.
+        data: The data to compress.
     Returns:
-        The item code.
+        The compressed data.
     """
-    # We can actually implement this using just the following:
-    #     return f"{CODE_PREFIX}({inv.GetSerialNumberString()})"  # noqa: ERA001
-    # The code this gives contains a non-zero encoding key. Most codes from a save editor zero it.
-    # Due to reasons discussed later, we need to do some manual serial decoding anyway, so might as
-    # well also zero ours, so that codes tend to round trip.
+    compressor = _BASE_COMPRESSOR.copy()
+    return compressor.compress(data) + compressor.flush()
 
-    buffer = bytearray(inv.CreateSerialNumber().Buffer)
 
-    # Comparing a code from CreateSerialNumber() vs a save editor:
+def decompress(data: bytes) -> bytes:
+    """
+    Decompresses a byte buffer using the modded code settings.
+
+    Args:
+        data: The data to decompress.
+    Returns:
+        The decompressed data.
+    """
+    compressor = _BASE_DECOMPRESSOR.copy()
+    return compressor.decompress(data) + compressor.flush()
+
+
+def _unpack_item_code_impl(
+    code: str,
+) -> tuple[UnpackResult, ItemDefinitionData | WeaponDefinitionData | None]:
+    # Start by trying to parse out the two main sections of the code, the encoded serial number and
+    # the compressed modded replacements
+    parse_result = parse_item_code(code)
+    if isinstance(parse_result, UnpackResult):
+        return parse_result, None
+    encoded_serial, compressed_replacements = parse_result
+
+    # We do need to do some validation before we can pass these to the game
+    # If you pass a serial number which is too short, it immediately crashes
+    decoded_serial = validate_and_decode_serial_number(encoded_serial)
+    if decoded_serial is None:
+        return UnpackResult.MALFORMED_CODE, None
+
+    # Since we're doing it anyway, also validate the modded replacements if we have any
+    if compressed_replacements is not None:
+        decompressed_replacements = validate_and_decompress_modded_replacements(
+            compressed_replacements,
+        )
+        if decompressed_replacements is None:
+            return UnpackResult.MALFORMED_CODE, None
+    else:
+        decompressed_replacements = None
+
+    # Create the new definition data
+
+    # Firstly we need to find out is a weapon or an item
+    # This is done a little weird just to avoid an extra allocation of the serial struct
+    # Convert the serial number into an unreal serial struct
+    peak_args = WrappedStruct(PEAK_IS_WEAPON.func)
+    (serial_num := peak_args.SerialNumber).Buffer = decoded_serial.ljust(40, b"\xff")
+    serial_num.State = SerialNumberState.SNS_Full
+
+    if PEAK_IS_WEAPON(peak_args):
+        is_weapon, unpacker, fields = True, WEAPON_UNPACK, WEAPON_FIELDS
+    else:
+        is_weapon, unpacker, fields = False, ITEM_UNPACK, ITEM_FIELDS
+
+    # Now unpack the serial. This one's done weirdly so that we don't need to specify what type the
+    # (required) `Def` arg is
+    unpack_args = WrappedStruct(unpacker.func)
+    unpack_args.SerialNumber = serial_num
+    success, _, unpacked_def_data = unpacker(unpack_args)
+
+    # Now even if the code looked valid before, the game can still reject it - e.g. if someone
+    # changed the game prefix, it might be asking for parts which don't exist in this game.
+    if not success:
+        return UnpackResult.GAME_REJECTED_CODE, None
+
+    # If we don't have any replacements, we're done
+    if decompressed_replacements is None:
+        return UnpackResult.FULL_WEAPON if is_weapon else UnpackResult.FULL_ITEM, unpacked_def_data
+
+    # Otherwise, need to apply them all too
+    success = apply_modded_replacements(
+        unpacked_def_data,
+        bytearray(decompressed_replacements),
+        fields,
+    )
+
+    result = (
+        (UnpackResult.PARTIAL_ITEM, UnpackResult.PARTIAL_WEAPON),
+        (UnpackResult.FULL_ITEM, UnpackResult.FULL_WEAPON),
+    )[success][is_weapon]
+    return result, unpacked_def_data
+
+
+def parse_item_code(code: str) -> UnpackResult | tuple[bytes, bytes | None]:
+    """
+    Parses an item code into the two byte buffers contained within.
+
+    Args:
+        code: The item code to parse.
+    Returns:
+        On success, a tuple of the encoded serial number and the compressed modded replacements (if
+        given).
+        On error, the relevant UnpackResult.
+    """
+    match = RE_ITEM_CODE.match(code.strip())
+    if match is None:
+        return UnpackResult.NO_MATCH
+
+    if RE_GAME_PREFIX.match(match.group(1)) is None:
+        return UnpackResult.WRONG_GAME
+
+    base_serial_b64 = match.group(2) or match.group(3)
+    replacements_b64 = match.group(4)
+
+    try:
+        encoded_serial = b64decode(base_serial_b64, validate=True)
+        compressed_replacements = (
+            None if replacements_b64 is None else b64decode(replacements_b64, validate=True)
+        )
+    except binascii.Error:
+        return UnpackResult.MALFORMED_CODE
+
+    return encoded_serial, compressed_replacements
+
+
+def validate_and_decode_serial_number(encoded_serial: bytes) -> bytearray | None:
+    """
+    Decodes a serial number, and validates that it looks sane.
+
+    Args:
+        encoded_serial: The encoded serial number to decode.
+    Returns:
+        The decoded serial number, or None on error.
+    """
+    # 1 byte prefix, 4 byte key, 2 byte checksum, and assume at least 1 byte of data = 8 min
+    # The buffer it's going into accepts 40 max
+    if len(encoded_serial) not in range(8, 40 + 1):
+        return None
+
+    decoded_buffer = decode_serial(encoded_serial)
+
+    # Make sure the checksum is valid
+    (original_check,) = struct.unpack_from(">H", decoded_buffer, 5)
+
+    decoded_buffer[5:7] = (0xFF, 0xFF)
+    check = calc_serial_checksum(decoded_buffer)
+
+    if check != original_check:
+        return None
+
+    return decoded_buffer
+
+
+def validate_and_decompress_modded_replacements(compressed_replacements: bytes) -> bytearray | None:
+    """
+    Decompresses a modded replacements list, and validates that it looks sane.
+
+    Args:
+        compressed_replacements: The compressed replacement list to try decompress.
+    Returns:
+        The decompressed replacements list, or None on error.
+    """
+
+    # 1 byte version, 2 byte zlib header, 4 byte zlib dict id, 4 byte zlib addler, and assume at
+    # least 1 byte of compressed data = 12 min
+    if len(compressed_replacements) < 12:  # noqa: PLR2004
+        return None
+    # Only version 0 is supported
+    if compressed_replacements[0] != 0:
+        return None
+    try:
+        decompressed = decompress(compressed_replacements[1:])
+    except zlib.error:
+        return None
+
+    return bytearray(decompressed)
+
+
+def apply_modded_replacements(
+    def_data: WeaponDefinitionData | ItemDefinitionData,
+    replacements: bytearray,
+    fields: tuple[FieldData, ...],
+) -> bool:
+    """
+    Applies any modded replacements to the given definition data.
+
+    Args:
+        def_data: The definition data to apply replacements to.
+        replacements: The modded replacements list.
+        fields: The set of fields which apply to this definition data.
+    Returns:
+        True on success, False if any replacement failed to apply.
+    """
+    (replacements_bitmap,) = struct.unpack_from("<H", replacements, 0)
+    replacements = replacements[2:]
+
+    missed_any_object = False
+    replacement_fields = (f for f in fields if (f.mask & replacements_bitmap) != 0)
+    for field in replacement_fields:
+        if field.is_int:
+            (value,) = struct.unpack_from("<i", replacements)
+            replacements = replacements[4:]
+        else:
+            obj_name, _, replacements = replacements.partition(b"\x00")
+            if obj_name:
+                decoded = None
+                try:
+                    decoded = obj_name.decode("utf8")
+                    value = unrealsdk.find_object("Object", decoded)
+                except (ValueError, UnicodeDecodeError):
+                    if decoded is None:
+                        decoded = repr(obj_name)
+                    logging.warning(f"Couldn't find part '{decoded}' while unpacking item code")
+                    missed_any_object = True
+                    value = None
+            else:
+                value = None
+
+        setattr(def_data, field.name, value)
+
+    return not missed_any_object
+
+
+def _pack_item_code_impl(def_data: ItemDefinitionData | WeaponDefinitionData) -> str:
+    if def_data._type == WEAPON_DEF_DATA:
+        packer, unpacker, fields = WEAPON_PACK, WEAPON_UNPACK, WEAPON_FIELDS
+    else:
+        packer, unpacker, fields = ITEM_PACK, ITEM_UNPACK, ITEM_FIELDS
+
+    # Start by packing the item code, then immediately unpacking it, so we can tell what slots saved
+    serial_number, _ = packer(def_data)
+
+    unpack_args = WrappedStruct(unpacker.func)
+    unpack_args.SerialNumber = serial_number
+    success, _, unpacked_def_data = unpacker(unpack_args)
+    if not success:
+        raise RuntimeError("failed to unpacked item serial code")
+
+    # Check if any slot changed
+    replacement_bits = 0
+    replacement_data = b""
+    for field in fields:
+        if (original := getattr(def_data, field.name)) == getattr(unpacked_def_data, field.name):
+            continue
+
+        # Something changed, so write it to the replacements
+        replacement_bits |= field.mask
+
+        match original:
+            case int():
+                assert field.is_int
+                replacement_data += struct.pack("<i", original)
+            case UObject():
+                assert not field.is_int
+                replacement_data += original._path_name().upper().encode("utf8") + b"\x00"
+            case None:
+                assert not field.is_int
+                replacement_data += b"\x00"
+            case _:
+                raise RuntimeError(f"Got unexpected value while encoding item code: {original}")
+
+    # Convert the serial number into a standard (unmodded) code
+    buffer = bytearray(serial_number.Buffer)
+
+    # Comparing the code we have from in game, vs what a save editor gives:
     # editor:  87 00000000 4a7e 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3
     # in game: 87 d1620929 ffff 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3 ff
     #               key    check                                                             padding
+    # This code still has padding, it doesn't have a checksum yet, and despite having a key it's not
+    # encoded yet.
 
-    # For some reason, despite not being encoded, the code from the game contains an encoding key.
-    # Zero it.
+    # Zero the encoding key.
     buffer[1:5] = (0, 0, 0, 0)
 
     # Now fix the checksum
@@ -54,74 +462,21 @@ def get_item_code(inv: WillowInventory) -> str:
     # sure if others will.
     buffer = buffer.rstrip(b"\xff")
 
-    # Now we can finally b64 it and add the prefix/brackets
-    return f"{CODE_PREFIX}({b64encode(buffer).decode('ascii')})"
+    # And finally, b64 it
+    base_code = b64encode(buffer).decode("ascii")
+
+    # If we don't have any modded replacements, can return this directly as a base game code
+    if replacement_bits == 0:
+        return f"{GAME_PREFIX}({base_code})"
+
+    # Otherwise, finish up the modded code
+    compressed_data = compress(struct.pack("<H", replacement_bits) + replacement_data)
+    modded_code = b64encode(MODDED_CODE_VERSION + compressed_data).decode("ascii")
+
+    return f"{GAME_PREFIX}MODDED[{base_code}|{modded_code}]"
 
 
-CREATE_INV_FROM_STRING: BoundFunction = unrealsdk.find_class(
-    "WillowInventory",
-).ClassDefaultObject.CreateInventoryFromSerialNumberString
-
-RE_CODE_CONTENTS = re.compile(r"^.+?\((.+)\)$")
-
-
-def spawn_item_from_code(code: str, owner: WillowPawn) -> WillowInventory | None:
-    """
-    Tries to spawn an item from the give item code.
-
-    Note this does not add the item to the pawn's inventory. To do this, also call:
-        owner.InvManager.AddInventoryToBackpack(item)
-
-    Args:
-        code: The item code to try spawn.
-        owner: The pawn to set as the item's owner.
-    Returns:
-        The item, or None on failure.
-    """
-    match = RE_CODE_CONTENTS.match(code.strip())
-    if match is None:
-        return None
-    serial_number = match.group(1)
-
-    # Unfortunately, we need to do some extra validation before we can call CREATE_INV_FROM_STRING
-    # If the code's too short, it will immediately crash the game. There may be other causes too.
-    # We'll ensure the checksum validates, to make sure the string is at least serial number shaped.
-    # This is why we need to do some manual parsing, as referenced above.
-
-    try:
-        encoded_serial = b64decode(serial_number, validate=True)
-    except binascii.Error:
-        return None
-
-    # 1 byte prefix, 4 byte key, 2 byte checksum, and assume at least 1 byte of data
-    if len(encoded_serial) < 8:  # noqa: PLR2004
-        return None
-
-    decoded_buffer = decode_serial(encoded_serial)
-
-    # Make sure the checksum is valid
-    original_check = struct.unpack_from(">H", decoded_buffer, 5)[0]
-
-    decoded_buffer[5:7] = (0xFF, 0xFF)
-    check = calc_serial_checksum(decoded_buffer)
-
-    if check != original_check:
-        return None
-
-    # Item code looks valid enough, try it
-    item, _ = CREATE_INV_FROM_STRING(serial_number, owner)
-
-    # If we had a valid looking serial number, but it contained invalid data (e.g. a TPS code in
-    # BL2), the returned item will be None.
-    if item is None:
-        return None
-
-    item.Owner = owner
-
-    return item
-
-
-# This code ported from Gibbed's editor. For some reason Gearbox uses a custom CRC...
+# This code all ported from Gibbed's editor.
 # https://github.com/gibbed/Gibbed.Gearbox/blob/cdb03b048e4989c2272162ebc40f5f34f14712fd/Gibbed.Gearbox.Common/CRC32.cs#L38
 
 
@@ -134,7 +489,7 @@ def decode_serial(encoded_serial: bytes) -> bytearray:
     Returns:
         The decoded serial number.
     """
-    key_and_steps = struct.unpack_from(">i", encoded_serial, 1)[0]
+    (key_and_steps,) = struct.unpack_from(">i", encoded_serial, 1)
     key = key_and_steps >> 5
 
     if key == 0:

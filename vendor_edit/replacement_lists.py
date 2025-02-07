@@ -532,7 +532,7 @@ class ItemReplacements(BaseReplacementList):
         return inv.CreateItemFromDef(
             NewItemDef=def_data,
             PlayerOwner=inv.Owner,
-            NewQuantity=0,
+            NewQuantity=1,
             bForceSelectNameParts=True,
         )
 
