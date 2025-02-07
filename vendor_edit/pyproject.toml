@@ -13,3 +13,10 @@ Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/vendor_ed
 name = "Vendor Edit"
 license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
 download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/vendor_edit.sdkmod"
+
+[tool.sdkmod_release_script]
+files = [
+    "*.md",
+    "*.py",
+    "zdict",
+]
