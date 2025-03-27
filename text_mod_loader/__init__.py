@@ -2,6 +2,7 @@
 
 if True:
     assert __import__("mods_base").__version_info__ >= (1, 5), "Please update the SDK"
+    assert __import__("pyunrealsdk").__version_info__ >= (1, 6, 0), "Please update the SDK"
 
 from typing import Any
 
