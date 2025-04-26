@@ -19,7 +19,6 @@ extend-exclude = [
     "PythonPartNotifier",
     "RoundsPerMinute",
     "SanitySaver",
-    "ScalingAdjuster",
     "SpawnMultiplier",
     "TextModLoader",
     "TrueDamageLogger",

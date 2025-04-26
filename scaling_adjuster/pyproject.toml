@@ -1,0 +1,16 @@
+[project]
+name = "scaling_adjuster"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Adds an option to let you easily adjust the game's base scaling constant.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/scaling_adjuster/Readme.md"
+
+[tool.sdkmod]
+name = "Scaling Adjuster"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/scaling_adjuster.sdkmod"
+supported_games = ["BL2", "TPS", "AoDK"]

@@ -1,5 +1,8 @@
 ## Changelog
 
+### Scaling Adjuster v2
+Upgraded to v3 sdk.
+
 ### Scaling Adjuster v1.7
 Added support for AoDK.
 
