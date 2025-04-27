@@ -4,4 +4,4 @@
 Upgraded to v3 sdk.
 
 ### One-Hit KO v1
-Inital Release.
+Initial Release.

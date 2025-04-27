@@ -19,4 +19,4 @@ Removed the level 255 maximum.
 Updated for SDK versions 0.7.4-0.7.6.
 
 ### Enemy Level Randomizer v1.0
-Inital Release.
+Initial Release.

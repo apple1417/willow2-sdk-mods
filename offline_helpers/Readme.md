@@ -26,4 +26,4 @@ Adds a few small features useful when playing offline.
 - Updated for SDK versions 0.7.4-0.7.6.
 
 ### Always Offline v1.0
-- Inital Release.
+- Initial Release.
