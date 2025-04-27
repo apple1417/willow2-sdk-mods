@@ -26,8 +26,8 @@ def set_scaling(val: float) -> None:
         "113 means every level the numbers get 13% higher."
     ),
 )
-def scaling_option(_: SliderOption, new_val: float) -> None:  # noqa: D103
-    if mod.is_enabled:
+def scaling_option(opt: SliderOption, new_val: float) -> None:  # noqa: D103
+    if opt.mod and opt.mod.is_enabled:
         set_scaling(new_val)
 
 
@@ -39,4 +39,4 @@ def on_disable() -> None:  # noqa: D103
     set_scaling(scaling_option.default_value)
 
 
-mod = build_mod()
+build_mod()
