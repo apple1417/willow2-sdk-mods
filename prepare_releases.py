@@ -246,10 +246,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.list_presets:
-        print("Available presets:")
-        print()
+        print("Available presets:")  # noqa: T201
+        print()  # noqa: T201
         for preset in cmake_get_presets():
-            print(f'  "{preset}"')
+            print(f'  "{preset}"')  # noqa: T201
         sys.exit(0)
 
     if args.preset:

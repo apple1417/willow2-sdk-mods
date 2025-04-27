@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: T201
 import itertools
 import json
 from collections import Counter

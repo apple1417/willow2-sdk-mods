@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: T201
 import json
 import struct
 from io import BufferedWriter

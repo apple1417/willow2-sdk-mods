@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ruff: noqa: T201
 import re
 import subprocess
 from datetime import UTC, datetime, timedelta
