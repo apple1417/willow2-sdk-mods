@@ -151,19 +151,6 @@
       "requirements": {}
     },
     {
-      "name": "One-Hit KO",
-      "description": "Makes you die in one hit.",
-      "tagline": "Makes you die in one hit.",
-      "types": [
-        "Gameplay"
-      ],
-      "latest": "1.0",
-      "versions": {
-        "1.0": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/OHKO.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Onezerker",
       "description": [
         "Ever felt gunzerking with two different guns was too complicated? No? Well too bad. Makes",
