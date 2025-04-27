@@ -9,7 +9,6 @@ extend-exclude = [
     "AltUseVendors",
     "ApplesBorderlandsCheats",
     "EquipLocker",
-    "HideUndiscoveredMissions",
     "ItemLevelUncapper",
     "Mario",
     "OHKO",

@@ -115,22 +115,6 @@
       "requirements": {}
     },
     {
-      "name": "Hide Undiscovered Missions",
-      "description": [
-        "A super simple mod that hides undiscovered missions in your mission log.\n\n![Demo Image]",
-        "(https://cdn.discordapp.com/attachments/294502426302742529/628085298760384522/unknown.png)"
-      ],
-      "tagline": "A super simple mod that hides undiscovered missions in your mission log.",
-      "types": [
-        "Utility"
-      ],
-      "latest": "1.2",
-      "versions": {
-        "1.2": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/HideUndiscoveredMissions.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Item Level Uncapper",
       "description": [
         "This mod is useless by itself, it should be used alongside the hexedit to increase the",
