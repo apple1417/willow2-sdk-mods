@@ -12,7 +12,6 @@ extend-exclude = [
     "ItemLevelUncapper",
     "Mario",
     "OHKO",
-    "OfflineHelpers",
     "Onezerker",
     "PythonPartNotifier",
     "RoundsPerMinute",

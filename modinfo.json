@@ -151,29 +151,6 @@
       "requirements": {}
     },
     {
-      "name": "Offline Helpers",
-      "description": [
-        "Adds several small features useful when playing offline.\n",
-        "- Fixes a crash when trying to chat while not connected to SHiFT.\n",
-        "- Adds an option to force your game to never connect to SHiFT.\n",
-        "- Adds an option to automatically hide the offline warning.\n",
-        "\n",
-        "Note that using \"Force Offline Mode\" will cause issues when running offline mod files -",
-        " you need to manually open your mod file in a text editor, search for",
-        " `GearboxAccountData_1` and change the `1` to a `0`. You will need to do this every time",
-        " you re-save the file in BLCMM."
-      ],
-      "tagline": "Adds several small features useful when playing offline.",
-      "types": [
-        "Utility"
-      ],
-      "latest": "1.3",
-      "versions": {
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/OfflineHelpers.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "One-Hit KO",
       "description": "Makes you die in one hit.",
       "tagline": "Makes you die in one hit.",
