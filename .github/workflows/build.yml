@@ -7,16 +7,13 @@ on: [
 ]
 
 env:
-  # LLVM MinGW download
-  LLVM_MINGW_VERSION: llvm-mingw-20240619-msvcrt-ubuntu-20.04-x86_64
-  LLVM_MINGW_DOWNLOAD: https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-msvcrt-ubuntu-20.04-x86_64.tar.xz
   # Limit which presets make artifacts
   RELEASE_ARTIFACT_PRESET: "msvc-release"
-  ALLOWED_ARTIFACT_PRESETS: "msvc-release;"
+  ALLOWED_ARTIFACT_PRESETS: "msvc-release;clang-cross-release"
 
 jobs:
   build-windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     strategy:
       fail-fast: false
@@ -57,7 +54,6 @@ jobs:
         submodules: recursive
 
     - name: Build
-      working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: >
         python ./prepare_releases.py
         --preset ${{ matrix.preset }}
@@ -74,81 +70,62 @@ jobs:
           *.sdkmod
 
   build-ubuntu:
-    # Require at least 24 for the mingw build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
-        preset:
-        - clang-cross-release
-        - llvm-mingw-release
-        - mingw-release
+        toolchain:
+          - preset: clang-cross-release
+            container: clang-cross
+          - preset: llvm-mingw-release
+            container: llvm-mingw
+          - preset: mingw-release
+            container: mingw
+
+    permissions:
+      packages: write
 
     steps:
-    - name: Setup CMake and Ninja
-      uses: lukka/get-cmake@latest
-
-    - name: Setup apt packages
-      uses: awalsh128/cache-apt-pkgs-action@latest
-      with:
-        packages: msitools python3-requests
-        version: ${{ runner.os }}-apt
-
-    - name: Setup LLVM MinGW
-      if: startswith(matrix.preset, 'llvm-mingw')
-      run: |
-        wget -nv ${{ env.LLVM_MINGW_DOWNLOAD }}
-        tar -xf ${{ env.LLVM_MINGW_VERSION }}.tar.xz -C ~/
-        echo $(readlink -f ~/${{ env.LLVM_MINGW_VERSION }}/bin) >> $GITHUB_PATH
-
-    - name: Setup MinGW
-      if: startswith(matrix.preset, 'mingw')
-      uses: egor-tensin/setup-mingw@v2
-      with:
-        platform: x86
-
-    - name: Setup Clang
-      if: startswith(matrix.preset, 'clang-cross')
-      uses: egor-tensin/setup-clang@v1
-      with:
-        platform: x86
-
-    - name: Restore win sdk cache
-      if: startswith(matrix.preset, 'clang-cross')
-      uses: actions/cache@v4
-      id: cache-win-sdk
-      with:
-        path: ~/win-sdk
-        key: ${{ runner.os }}-win-sdk
-
-    - name: Setup win sdk
-      if: startswith(matrix.preset, 'clang-cross') && steps.cache-win-sdk.outputs.cache-hit != 'true'
-      run: |
-        git clone https://github.com/mstorsjo/msvc-wine.git
-        msvc-wine/vsdownload.py --accept-license --dest ~/win-sdk Microsoft.VisualStudio.Workload.VCTools
-        msvc-wine/install.sh ~/win-sdk
-        rm -r msvc-wine
-
     - name: Checkout repository and submodules
       uses: actions/checkout@v4
       with:
         submodules: recursive
 
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Build
-      working-directory: ${{ env.GITHUB_WORKSPACE }}
-      # The extra msvc wine arg won't do anything if we're not cross compiling
-      run: >
-        ./prepare_releases.py
-        --preset ${{ matrix.preset }}
-        --configure -C-G=Ninja -C-DMSVC_WINE_ENV_SCRIPT=$(readlink -f ~)/win-sdk/bin/x86/msvcenv.sh
-        --build
+      uses: devcontainers/ci@v0.3
+      with:
+        imageName: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}
+        cacheFrom: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}:latest
+        configFile: .devcontainer/${{ matrix.toolchain.container }}/devcontainer.json
+        push: always
+        # The git watcher cmake thinks something's unsafe? Doesn't happen to me locally.
+        runCmd: |
+          git config --global --add safe.directory `pwd`
+          git config --global --add safe.directory `pwd`/.willow2-mod-manager
+          git config --global --add safe.directory `pwd`/.willow2-mod-manager/libs/pluginloader
+          git config --global --add safe.directory `pwd`/.willow2-mod-manager/libs/pyunrealsdk
+          git config --global --add safe.directory `pwd`/.willow2-mod-manager/libs/pyunrealsdk/libs/unrealsdk
+
+          set -e
+
+          ./prepare_releases.py                     \
+            --preset ${{ matrix.toolchain.preset }} \
+            --configure                             \
+            --build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
-      if: contains(env.ALLOWED_ARTIFACT_PRESETS, matrix.preset)
+      if: contains(env.ALLOWED_ARTIFACT_PRESETS, matrix.toolchain.preset)
       with:
-        name: ${{ matrix.preset }}
+        name: ${{ matrix.toolchain.preset }}
         path: |
           *.zip
           *.sdkmod
@@ -156,7 +133,7 @@ jobs:
 # ==============================================================================
 
   clang-tidy:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     strategy:
       fail-fast: false
@@ -187,7 +164,6 @@ jobs:
         submodules: recursive
 
     - name: Configure CMake
-      working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: |
         python prepare_releases.py                                              `
           --preset ${{ matrix.preset }}                                         `
@@ -201,7 +177,6 @@ jobs:
           -Path ".out\build\${{ matrix.preset }}\compile_commands.json"
 
     - name: Run clang-tidy
-      working-directory: ${{ env.GITHUB_WORKSPACE }}
       run: |
         python (Get-Command run-clang-tidy).Source                              `
           -p ".out\build\${{ matrix.preset }}"                                  `
@@ -214,11 +189,10 @@ jobs:
         fixesFile: clang-tidy-fixes.yml
 
   clang-format:
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     steps:
     - name: Setup Clang
-      if: startswith(matrix.preset, 'clang')
       uses: egor-tensin/setup-clang@v1
 
     - name: Checkout repository

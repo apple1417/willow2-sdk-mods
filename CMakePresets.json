@@ -30,6 +30,10 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       },
+      "environment": {
+        "MSVC_WINE_ENV_SCRIPT": "/win-sdk/bin/x86/msvcenv.sh"
+      },
+      "generator": "Ninja",
       "toolchainFile": ".willow2-mod-manager/libs/pyunrealsdk/common_cmake/clang-cross-x86.cmake"
     },
     {
@@ -40,6 +44,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       },
+      "generator": "Ninja",
       "toolchainFile": ".willow2-mod-manager/libs/pyunrealsdk/common_cmake/i686-w64-mingw32.cmake"
     },
     {
@@ -50,6 +55,7 @@
         "lhs": "${hostSystemName}",
         "rhs": "Windows"
       },
+      "generator": "Ninja",
       "toolchainFile": ".willow2-mod-manager/libs/pyunrealsdk/common_cmake/llvm-i686-w64-mingw32.cmake"
     },
     {
