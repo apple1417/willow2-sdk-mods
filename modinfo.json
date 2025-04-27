@@ -205,27 +205,6 @@
       "requirements": {}
     },
     {
-      "name": "Rounds Per Minute",
-      "description": [
-        "Makes item cards display rounds per minute rather than per second.\n",
-        "\n",
-        "![Demo Image](https://cdn.discordapp.com/attachments/288382606288879629/666536469766340640/unknown.png)\n",
-        "\n",
-        "Note that the firerate shown when comparing against a weapon on the ground will still be",
-        " in rounds per second, this is impossible to fix."
-      ],
-      "tagline": "Makes item cards display rounds per minute rather than per second.",
-      "types": [
-        "Utility"
-      ],
-      "latest": "1.3",
-      "versions": {
-        "1.2": "https://github.com/apple1417/willow2-sdk-mods/raw/bcd5b7a2d92e2b8af9ded5de00117775d17e7078/RoundsPerMinute/RoundsPerMinute.zip",
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/RoundsPerMinute.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Sanity Saver",
       "description": [
         "Disables sanity check, and also saves items which don't serialize, which would have parts",

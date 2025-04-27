@@ -13,7 +13,6 @@ extend-exclude = [
     "Mario",
     "Onezerker",
     "PythonPartNotifier",
-    "RoundsPerMinute",
     "SanitySaver",
     "SpawnMultiplier",
     "TextModLoader",
