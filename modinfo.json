@@ -64,50 +64,6 @@
       }
     },
     {
-      "name": "Command Extensions",
-      "description": [
-        "Adds a few new console commands, and provides functionality for other mods to do the same.",
-        " All these commands are fully compatible with blcmm files, you can just put them in your",
-        " mod and have users merge it with other files and enable/disable various categories and",
-        " it all just keeps working fine.\n",
-        "\n",
-        "[See here for info on the builtin commands and how to write mods using them.]",
-        "(https://github.com/apple1417/willow2-sdk-mods/blob/master/.legacy/Writing-Mods.md)"
-      ],
-      "tagline": "Adds a few new console commands, which are fully compatible with blcmm files.",
-      "types": [
-        "Library"
-      ],
-      "latest": "1.9",
-      "versions": {
-        "1.5": "https://github.com/apple1417/willow2-sdk-mods/raw/a45fde7c5edc2224c15ac0a775076aacd3d40a0a/CommandExtensions/CommandExtensions.zip",
-        "1.6": "https://github.com/apple1417/willow2-sdk-mods/raw/0c3096fb91ed3157557106b2e742a14c8b328c5c/CommandExtensions/CommandExtensions.zip",
-        "1.7": "https://github.com/apple1417/willow2-sdk-mods/raw/745a8880c414e8f1bd8e697dcd7cb7d9496d45ad/CommandExtensions/CommandExtensions.zip",
-        "1.8": "https://github.com/apple1417/willow2-sdk-mods/raw/2bd81dffeee193b61c96ca04690f436f15783ad0/CommandExtensions/CommandExtensions.zip",
-        "1.9": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/CommandExtensions.zip"
-      },
-      "requirements": {}
-    },
-    {
-      "name": "Enemy Level Randomizer",
-      "description": [
-        "As the name might suggest, randomizes enemy levels. Probably a bad idea.\n",
-        "\n",
-        "Note that this has a few options to let you customize the randomization. You can for",
-        " example just turn randomization off and only add a pre-defined offset onto enemies'",
-        " levels."
-      ],
-      "tagline": "As the name might suggest, randomizes enemy levels. Probably a bad idea.",
-      "types": [
-        "Gameplay"
-      ],
-      "latest": "1.4",
-      "versions": {
-        "1.4": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/EnemyLevelRandomizer.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Enums",
       "description": [
         "Imports all Unrealscript enums into Python."
@@ -207,24 +163,6 @@
       "latest": "2.0",
       "versions": {
         "2.0": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/Mario.zip"
-      },
-      "requirements": {}
-    },
-    {
-      "name": "No Ads",
-      "description": [
-        "Prevents ads from showing. Includes both the obnoxious BL3 ads as well as the small MoTD",
-        " DLC ads.\n",
-        "\n",
-        "![Demo Image](https://cdn.discordapp.com/attachments/294502426302742529/685460934101434384/49520_20200306135906_1.png)"
-      ],
-      "tagline": "Prevents ads from showing.",
-      "types": [
-        "Utility"
-      ],
-      "latest": "1.3",
-      "versions": {
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/NoAds.zip"
       },
       "requirements": {}
     },
@@ -397,27 +335,6 @@
       "versions": {
         "1.1": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/Structs.zip",
         "1.0": "https://github.com/apple1417/willow2-sdk-mods/raw/9b7025d970ec9b9132abac8d433d44e1e4388e96/Structs/Structs.zip"
-      },
-      "requirements": {}
-    },
-    {
-      "name": "Text Mod Loader",
-      "description": [
-        "Displays Text Mods from binaries in the SDK mods menu."
-      ],
-      "tagline": [
-        "Displays Text Mods from binaries in the SDK mods menu."
-      ],
-      "types": [
-        "Library"
-      ],
-      "latest": "1.4",
-      "versions": {
-        "1.4": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/TextModLoader.zip",
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/3aa1fd801c623c9330382d9e60b22d2383a53f3e/TextModLoader/TextModLoader.zip",
-        "1.2": "https://github.com/apple1417/willow2-sdk-mods/raw/f6bf3ae8db4754aa17fdc7d2f33bc42252c3f7b1/TextModLoader/TextModLoader.zip",
-        "1.1": "https://github.com/apple1417/willow2-sdk-mods/raw/ede5da85559b0a2a9aabc2638f0e5eb1a8eef9b8/TextModLoader/TextModLoader.zip",
-        "1.0": "https://github.com/apple1417/willow2-sdk-mods/raw/9578e50c9f21e9ecebadbde1a91aef7dd035e9fe/TextModLoader/TextModLoader.zip"
       },
       "requirements": {}
     },

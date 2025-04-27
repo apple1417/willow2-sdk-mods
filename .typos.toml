@@ -8,7 +8,6 @@ extend-exclude = [
 
     "AltUseVendors",
     "ApplesBorderlandsCheats",
-    "EnemyLevelRandomizer",
     "EquipLocker",
     "HideUndiscoveredMissions",
     "ItemLevelUncapper",

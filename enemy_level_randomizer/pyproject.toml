@@ -1,0 +1,17 @@
+[project]
+name = "enemy_level_randomizer"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Lets you randomizer the level of enemies a bit more.
+
+Probably a bad idea.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/enemy_level_randomizer/Readme.md"
+
+[tool.sdkmod]
+name = "Enemy Level Randomizer"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/enemy_level_randomizer.sdkmod"

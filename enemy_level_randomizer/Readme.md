@@ -1,5 +1,8 @@
 ## Changelog
 
+### Enemy Level Randomizer v2
+Upgraded to v3 sdk.
+
 ### Enemy Level Randomizer v1.4
 Adjusted tooltips to hopefully be more self explanatory. This will reset your settings.    
 Limited sliders to 50 to make them more usable. You should be able to manually edit the settings file if you want higher.
