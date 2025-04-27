@@ -1,0 +1,15 @@
+[project]
+name = "true_damage_logger"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Prints the actual amount of damage you deal to console, bypassing visual damage cap.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/true_damage_logger/Readme.md"
+
+[tool.sdkmod]
+name = "True Damage Logger"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/true_damage_logger.sdkmod"

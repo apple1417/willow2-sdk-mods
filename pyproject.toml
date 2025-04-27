@@ -27,7 +27,6 @@ exclude = [
     "SanitySaver",
     "SpawnMultiplier",
     "TextModLoader",
-    "TrueDamageLogger",
     "UserFeedback",
 ]
 
@@ -54,7 +53,6 @@ extend-exclude = [
     "SanitySaver",
     "SpawnMultiplier",
     "TextModLoader",
-    "TrueDamageLogger",
     "UserFeedback",
 ]
 

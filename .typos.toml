@@ -21,7 +21,6 @@ extend-exclude = [
     "SanitySaver",
     "SpawnMultiplier",
     "TextModLoader",
-    "TrueDamageLogger",
     "UserFeedback",
 
     "command_extensions/file_parser_tests/*.test_in",

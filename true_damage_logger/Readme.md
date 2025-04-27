@@ -1,5 +1,8 @@
 ## Changelog
 
+### True Damage Logger v2
+Upgraded to v3 sdk.
+
 ### True Damage Logger v1.3
 Updated to use some of the new features from SDK version 0.7.8.    
 Most notably, the enabled state is now saved over game launches.

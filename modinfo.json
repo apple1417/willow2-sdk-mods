@@ -422,26 +422,6 @@
       "requirements": {}
     },
     {
-      "name": "True Damage Logger",
-      "description": [
-        "Prints the actual amount of damage you deal to console, bypassing visual damage cap.\n",
-        "\n",
-        "Has a configurable minimum damage before logging, in case you don't want to spam your",
-        " console."
-      ],
-      "tagline": [
-        "Prints the actual amount of damage you deal to console, bypassing visual damage cap."
-      ],
-      "types": [
-        "Utility"
-      ],
-      "latest": "1.3",
-      "versions": {
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/TrueDamageLogger.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "UserFeedback",
       "description": [
         "Adds several functions/classes to let you show various types of feedback to and get input",
