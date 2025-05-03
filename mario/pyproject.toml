@@ -1,0 +1,16 @@
+[project]
+name = "mario"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Jump on enemies to kill them.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/mario/Readme.md"
+
+[tool.sdkmod]
+name = "Mario Mode"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+coop_support = "HostOnly"
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/mario.sdkmod"

@@ -10,7 +10,6 @@ extend-exclude = [
     "ApplesBorderlandsCheats",
     "EquipLocker",
     "ItemLevelUncapper",
-    "Mario",
     "Onezerker",
     "PythonPartNotifier",
     "SanitySaver",
