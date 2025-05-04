@@ -219,22 +219,6 @@
       "requirements": {}
     },
     {
-      "name": "Spawn Multiplier",
-      "description": [
-        "Adds an option to let you easily multiply the amount of spawns you're getting. Updates",
-        " live, and has a few different ways to handle the spawn limit."
-      ],
-      "tagline": "Adds an option to let you easily multiply the amount of spawns you're getting.",
-      "types": [
-        "Gameplay"
-      ],
-      "latest": "1.5",
-      "versions": {
-        "1.5": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/SpawnMultiplier.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Structs",
       "description": [
         "Imports all Unrealscript structs into Python as named tuples."

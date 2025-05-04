@@ -1,0 +1,15 @@
+[project]
+name = "spawn_multiplier"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Adds an option to let you easily multiply the amount of spawns you're getting.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/spawn_multiplier/Readme.md"
+
+[tool.sdkmod]
+name = "Spawn Multiplier"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/spawn_multiplier.sdkmod"
