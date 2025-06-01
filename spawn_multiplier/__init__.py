@@ -39,12 +39,19 @@ def spawn_pop_controlled_actor(
 
 
 DEN_BLACKLIST: set[str] = {
+    # Thousand Cuts Brick
     "Grass_Cliffs_Combat.TheWorld:PersistentLevel.PopulationOpportunityDen_16",
+    # First Bunker autocannon
     "Boss_Cliffs_CombatLoader.TheWorld:PersistentLevel.PopulationOpportunityDen_4",
+    # Claptrap worshippers
     "Sage_RockForest_Dynamic.TheWorld:PersistentLevel.PopulationOpportunityDen_11",
+    # Story kill Uranus
     "Helios_Mission_Main.TheWorld:PersistentLevel.PopulationOpportunityDen_6",
+    # Resurrected skeletons in My Dead Brother - first grave
     "Dungeon_Mission.TheWorld:PersistentLevel.PopulationOpportunityDen_4",
+    # Resurrected skeletons in My Dead Brother - second grave
     "Dungeon_Mission.TheWorld:PersistentLevel.PopulationOpportunityDen_12",
+    # Resurrected skeletons in My Dead Brother - third grave
     "Dungeon_Mission.TheWorld:PersistentLevel.PopulationOpportunityDen_9",
 }
 ENCOUNTER_BLACKLIST: set[str] = set()
