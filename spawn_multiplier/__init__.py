@@ -32,23 +32,18 @@ def update_spawn_limit(pop_master: UObject, limit_type: SpawnLimitType | str) ->
         existing_pop_master := last_pop_master()
     ) is not None and last_pop_master_original_limit is not None:
         existing_pop_master.MaxActorCost = last_pop_master_original_limit
-        print(f"Restored previous MaxActorCost: {existing_pop_master.MaxActorCost}")
 
     last_pop_master = WeakPointer(pop_master)
     last_pop_master_original_limit = pop_master.MaxActorCost
 
     match limit_type:
         case SpawnLimitType.Linear:
-            pop_master.MaxActorCost = int(pop_master.MaxActorCost * multiplier_slider.value)
-            print(f"Set MaxActorCost (Linear): {pop_master.MaxActorCost}")
+            pop_master.MaxActorCost *= multiplier_slider.value
         case SpawnLimitType.Unlimited:
             pop_master.MaxActorCost = 0x7FFFFFFF
-            print(f"Set MaxActorCost (Unlimited): {pop_master.MaxActorCost}")
         case SpawnLimitType.Custom:
-            pop_master.MaxActorCost = int(pop_master.MaxActorCost * custom_multiplier_slider.value)
-            print(f"Set MaxActorCost (Custom): {pop_master.MaxActorCost}")
+            pop_master.MaxActorCost *= custom_multiplier_slider.value
         case _:
-            print(f"SpawnLimitType Standard or unrecognized: {pop_master.MaxActorCost}")
             pass
 
 
@@ -91,11 +86,11 @@ def spawn_limit_spinner(opt: SpinnerOption, new_value: str) -> None:  # noqa: D1
 
 
 @SliderOption(
-    identifier="Custom Multiplier",
+    identifier="Custom Spawn Limit Multiplier",
     value=4,
     min_value=1,
     max_value=25,
-    description="The custom multiplier to apply when using 'Custom' spawn limit.",
+    description="The custom multiplier to apply when using 'Custom' spawn limit type.",
 )
 def custom_multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
     if not opt.mod or not opt.mod.is_enabled:
@@ -238,7 +233,6 @@ def multiply_existing(adjustment: float) -> None:
         multiply_pop_encounter_if_allowed(encounter, adjustment)
 
 
-
 def on_enable() -> None:  # noqa: D103
     multiply_existing(multiplier_slider.value / 1)
     update_spawn_limit(
@@ -255,7 +249,6 @@ def on_disable() -> None:  # noqa: D103
     multiply_existing(1 / multiplier_slider.value)
     if (pop_master := last_pop_master()) is not None and last_pop_master_original_limit is not None:
         pop_master.MaxActorCost = last_pop_master_original_limit
-        print(f"Reset MaxActorCost to original: {pop_master.MaxActorCost}")
 
 
 mod = build_mod(options=[multiplier_slider, spawn_limit_spinner, custom_multiplier_slider])

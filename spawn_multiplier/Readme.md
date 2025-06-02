@@ -20,6 +20,9 @@ The current list of blacklisted enemies is:
 
 ## Changelog
 
+### Spawn Multiplier v3
+- Added the ability to set custom spawn limit multipliers, thanks to @AldebaraanMKII.
+
 ### Spawn Multiplier v2
 - Upgraded to v3 sdk.
 
