@@ -11,6 +11,7 @@ class SpawnLimitType(StrEnum):
     Standard = "Standard"
     Linear = "Linear"
     Unlimited = "Unlimited"
+    Custom = "Custom"
 
 
 last_pop_master: WeakPointer = WeakPointer()
@@ -40,8 +41,23 @@ def update_spawn_limit(pop_master: UObject, limit_type: SpawnLimitType | str) ->
             pop_master.MaxActorCost *= multiplier_slider.value
         case SpawnLimitType.Unlimited:
             pop_master.MaxActorCost = 0x7FFFFFFF
+        case SpawnLimitType.Custom:
+            pop_master.MaxActorCost *= custom_multiplier_slider.value
         case _:
             pass
+
+
+@SliderOption(
+    identifier="Multiplier",
+    value=4,
+    min_value=1,
+    max_value=25,
+    description="The amount to multiply spawns by.",
+)
+def multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
+    if not opt.mod or not opt.mod.is_enabled:
+        return
+    multiply_existing(new_value / multiplier_slider.value)
 
 
 @SpinnerOption(
@@ -52,7 +68,8 @@ def update_spawn_limit(pop_master: UObject, limit_type: SpawnLimitType | str) ->
         "How to handle the spawn limit."
         f" {SpawnLimitType.Standard}: Don't change it;"
         f" {SpawnLimitType.Linear}: Increase linearly with the multiplier;"
-        f" {SpawnLimitType.Unlimited}: Remove it."
+        f" {SpawnLimitType.Unlimited}: Remove it;"
+        f" {SpawnLimitType.Custom}: Apply a custom multiplier."
     ),
 )
 def spawn_limit_spinner(opt: SpinnerOption, new_value: str) -> None:  # noqa: D103
@@ -66,6 +83,20 @@ def spawn_limit_spinner(opt: SpinnerOption, new_value: str) -> None:  # noqa: D1
         ),
         new_value,
     )
+
+
+@SliderOption(
+    identifier="Custom Spawn Limit Multiplier",
+    value=4,
+    min_value=1,
+    max_value=25,
+    description="The custom multiplier to apply when using 'Custom' spawn limit type.",
+)
+def custom_multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
+    if not opt.mod or not opt.mod.is_enabled:
+        return
+    if spawn_limit_spinner.value == SpawnLimitType.Custom:
+        multiply_existing(new_value / custom_multiplier_slider.value)
 
 
 @hook("GearboxFramework.PopulationMaster:SpawnPopulationControlledActor")
@@ -202,19 +233,6 @@ def multiply_existing(adjustment: float) -> None:
         multiply_pop_encounter_if_allowed(encounter, adjustment)
 
 
-@SliderOption(
-    identifier="Multiplier",
-    value=4,
-    min_value=1,
-    max_value=25,
-    description="The amount to multiply spawns by.",
-)
-def multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
-    if not opt.mod or not opt.mod.is_enabled:
-        return
-    multiply_existing(new_value / multiplier_slider.value)
-
-
 def on_enable() -> None:  # noqa: D103
     multiply_existing(multiplier_slider.value / 1)
     update_spawn_limit(
@@ -233,4 +251,4 @@ def on_disable() -> None:  # noqa: D103
         pop_master.MaxActorCost = last_pop_master_original_limit
 
 
-mod = build_mod(options=[multiplier_slider, spawn_limit_spinner])
+mod = build_mod(options=[multiplier_slider, spawn_limit_spinner, custom_multiplier_slider])
