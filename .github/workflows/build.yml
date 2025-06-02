@@ -105,7 +105,7 @@ jobs:
         imageName: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}
         cacheFrom: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}:latest
         configFile: .devcontainer/${{ matrix.toolchain.container }}/devcontainer.json
-        push: always
+        push: never
         # The git watcher cmake thinks something's unsafe? Doesn't happen to me locally.
         runCmd: |
           git config --global --add safe.directory `pwd`
