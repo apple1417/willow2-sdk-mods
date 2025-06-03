@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Any
 
 import unrealsdk
-from mods_base import SliderOption, SpinnerOption, build_mod, hook, Game
+from mods_base import Game, SliderOption, SpinnerOption, build_mod, hook
 from unrealsdk.hooks import Type
 from unrealsdk.unreal import BoundFunction, UObject, WeakPointer, WrappedStruct
 
@@ -180,7 +180,7 @@ def multiply_pop_encounter_if_allowed(encounter: UObject | None, adjustment: flo
     """
     if encounter is None or encounter.PathName(encounter) in ENCOUNTER_BLACKLIST:
         return
-    
+
     if Game.get_current() == Game.BL1:
         for limit in encounter.SpawnLimits:
             limit.MaxTotalToSpawn.BaseValueScaleConstant = round(
