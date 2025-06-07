@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Any
 
 import unrealsdk
-from mods_base import SliderOption, SpinnerOption, build_mod, hook
+from mods_base import Game, SliderOption, SpinnerOption, build_mod, hook
 from unrealsdk.hooks import Type
 from unrealsdk.unreal import BoundFunction, UObject, WeakPointer, WrappedStruct
 
@@ -126,6 +126,22 @@ DEN_BLACKLIST: set[str] = {
     "Dungeon_Mission.TheWorld:PersistentLevel.PopulationOpportunityDen_12",
     # Resurrected skeletons in My Dead Brother - third grave
     "Dungeon_Mission.TheWorld:PersistentLevel.PopulationOpportunityDen_9",
+    #BL1
+    #Intro dens just before fyrestone
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_4",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_5",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_12",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_15",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_16",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_19",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_26",
+    "Arid_Firestone.TheWorld:PersistentLevel.PopulationOpportunityDen_28",
+    #Psychos before Hanz/Franz
+    "Interlude_2_Digger.TheWorld:PersistentLevel.PopulationOpportunityDen_1",
+    #Turrets in Crimson Enclave, spawn with no collision
+    "W_Waste_Crimson_P.TheWorld:PersistentLevel.PopulationOpportunityDen_9",
+    "W_Waste_Crimson_P.TheWorld:PersistentLevel.PopulationOpportunityDen_12",
+    "W_Waste_Crimson_P.TheWorld:PersistentLevel.PopulationOpportunityDen_17",
 }
 ENCOUNTER_BLACKLIST: set[str] = set()
 
@@ -179,6 +195,16 @@ def multiply_pop_encounter_if_allowed(encounter: UObject | None, adjustment: flo
         adjustment: How much to multiply spawns by.
     """
     if encounter is None or encounter.PathName(encounter) in ENCOUNTER_BLACKLIST:
+        return
+
+    if Game.get_current() == Game.BL1:
+        for limit in encounter.SpawnLimits:
+            limit.MaxTotalToSpawn.BaseValueScaleConstant = round(
+                limit.MaxTotalToSpawn.BaseValueScaleConstant * adjustment,
+            )
+            limit.MaxActiveAtATime.BaseValueScaleConstant = round(
+                limit.MaxActiveAtATime.BaseValueScaleConstant * adjustment,
+            )
         return
 
     for wave in encounter.Waves:
