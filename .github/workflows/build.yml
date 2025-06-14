@@ -9,7 +9,7 @@ on: [
 env:
   # Limit which presets make artifacts
   RELEASE_ARTIFACT_PRESET: "msvc-release"
-  ALLOWED_ARTIFACT_PRESETS: "msvc-release;clang-cross-release"
+  ALLOWED_ARTIFACT_PRESETS: "msvc-release;"
 
 jobs:
   build-windows:
@@ -105,7 +105,7 @@ jobs:
         imageName: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}
         cacheFrom: ghcr.io/apple1417/willow2-sdk-mods/${{ matrix.toolchain.container }}:latest
         configFile: .devcontainer/${{ matrix.toolchain.container }}/devcontainer.json
-        push: never
+        push: ${{ fromJSON('["never", "always"]')[github.ref == 'refs/heads/master' && github.repository == 'apple1417/willow2-sdk-mods'] }}
         # The git watcher cmake thinks something's unsafe? Doesn't happen to me locally.
         runCmd: |
           git config --global --add safe.directory `pwd`
@@ -201,7 +201,7 @@ jobs:
     - name: Run clang-format
       run: |
         $all_files=$(Get-ChildItem                                                  `
-                      $(Get-ChildItem . -Directory -Exclude ".*",TextModLoader)     `
+                      $(Get-ChildItem . -Directory -Exclude ".*")                   `
                       -File                                                         `
                       -Recurse                                                      `
                       -Include ("*.c", "*.cpp", "*.h", "*.hpp")                     `

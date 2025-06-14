@@ -8,10 +8,6 @@
 .gdb_history
 .out
 
-# User scripts with templates
-postbuild
-postbuild.bat
-
 # CMake (from https://github.com/github/gitignore/blob/main/CMake.gitignore)
 CMakeLists.txt.user
 CMakeCache.txt
