@@ -1,5 +1,3 @@
-# ruff: noqa: D103
-
 import importlib.util
 import json
 import platform

@@ -101,7 +101,7 @@ def can_item_be_equipped(item: Inventory) -> bool:  # noqa: D103
     return FLASH_LABEL_MAP[flash].value
 
 
-allegience_restriction = Restriction(
+allegiance_restriction = Restriction(
     "Allegiance",
     "Lock items based on their manufacturer.",
     (*ALL_MANUFACTURERS, allegiance_relics, usable_items, weapons_only),

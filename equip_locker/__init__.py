@@ -16,7 +16,7 @@ from unrealsdk.hooks import Block, Type
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from equip_locker.restrictions import Restriction
-from equip_locker.restrictions.allegiance import allegience_restriction
+from equip_locker.restrictions.allegiance import allegiance_restriction
 from equip_locker.restrictions.rarity import rarity_restriction
 from equip_locker.restrictions.weap_item_type import weapon_item_type_restriction
 
@@ -26,7 +26,7 @@ options: list[BaseOption] = []
 enable_restriction_pairs: list[tuple[BoolOption, Restriction]] = []
 
 for restriction in (
-    allegience_restriction,
+    allegiance_restriction,
     rarity_restriction,
     weapon_item_type_restriction,
 ):
