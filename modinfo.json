@@ -82,39 +82,6 @@
       "requirements": {}
     },
     {
-      "name": "Equip Locker",
-      "description": [
-        "Adds various options that prevent you from equipping certain types of items/weapons.\n",
-        "\n",
-        "Useful for allegiance or single rarity or weapon type runs.\n",
-        "\n",
-        "Currently includes options for:\n",
-        "- Allegiance\n",
-        "  - Manufacturer\n",
-        "  - Override for allegiance relics\n",
-        "  - Override for usable items (health vials, sdus, etc)\n",
-        "  - Weapons Only\n",
-        "- Rarity\n",
-        "- Weapon/Item Type\n",
-        "\n",
-        "Yes pearlescent rarity is missing, no I can't fix it, gearbox just set them to",
-        " `RARITY_UNKNOWN`.\n"
-      ],
-      "tagline": [
-        "Adds various options that prevent you from equipping certain types of items/weapons."
-      ],
-      "types": [
-        "Gameplay",
-        "Utility"
-      ],
-      "latest": "1.4",
-      "versions": {
-        "1.3": "https://github.com/apple1417/willow2-sdk-mods/raw/a45fde7c5edc2224c15ac0a775076aacd3d40a0a/EquipLocker/EquipLocker.zip",
-        "1.4": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/EquipLocker.zip"
-      },
-      "requirements": {}
-    },
-    {
       "name": "Item Level Uncapper",
       "description": [
         "This mod is useless by itself, it should be used alongside the hexedit to increase the",

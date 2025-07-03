@@ -1,0 +1,17 @@
+[project]
+name = "equip_locker"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Adds various options that prevent you from equipping certain types of items/weapons.
+
+Useful for allegiance or single rarity or weapon type runs.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/equip_locker/Readme.md"
+
+[tool.sdkmod]
+name = "Equip Locker"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/equip_locker.sdkmod"

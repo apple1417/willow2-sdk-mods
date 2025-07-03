@@ -1,5 +1,8 @@
 # Equip Locker
 
+### Equip Locker v2
+Upgraded to v3 sdk.
+
 ### Equip Locker v1.4
 Fixed that rarity restrictions were all hidden in AoDK.
 

@@ -14,12 +14,10 @@ exclude = [
 
     "AltUseVendors",
     "ApplesBorderlandsCheats",
-    "EquipLocker",
     "ItemLevelUncapper",
     "Onezerker",
     "PythonPartNotifier",
     "SanitySaver",
-    "TextModLoader",
     "UserFeedback",
 ]
 
@@ -33,12 +31,10 @@ extend-exclude = [
 
     "AltUseVendors",
     "ApplesBorderlandsCheats",
-    "EquipLocker",
     "ItemLevelUncapper",
     "Onezerker",
     "PythonPartNotifier",
     "SanitySaver",
-    "TextModLoader",
     "UserFeedback",
 ]
 
