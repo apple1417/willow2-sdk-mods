@@ -18,14 +18,14 @@ Thanks to @Siggless
 
 ## Alt Use Vendors v2.0
 Near complete rewrite.
-- Removed depencency on AsyncUtil. Added decepency to Enums.
+- Removed dependency on AsyncUtil. Added decepency to Enums.
 - Added the option to sell all trash at weapon vendors.
 - Fixed that if updating costs were on, and if the displayed cost was higher than your wallet, you'd be unable to buy health/ammo even if you could afford the actual cost.
 - No longer hiding the alt use icon if you have nothing to buy, to allow other coop players to use them.
 - Removed the updating costs option. It's now always on, and uses hooks instead of polling.
 
 ## Alt Use Vendors v1.7
-- Fixed crash that occured when switching maps while standing near a vending machine.
+- Fixed crash that occurred when switching maps while standing near a vending machine.
 
 ## Alt Use Vendors v1.6
 - Added more optimization in anticipation of SDK version 0.7.10. Will fall back to current implementation when running on older versions.

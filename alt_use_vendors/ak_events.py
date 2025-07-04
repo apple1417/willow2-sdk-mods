@@ -75,7 +75,7 @@ AKE_INTERACT_BY_VENDOR_NAME: dict[str, str] = {
 
 
 # AkEvents are not loaded by default, and we don't want to do an "expensive" find object call, or a
-# truely expensive load package, so we'll just cache them (and keep alive) as we use them
+# truly expensive load package, so we'll just cache them (and keep alive) as we use them
 akevent_cache: dict[str, AkEvent] = {}
 
 

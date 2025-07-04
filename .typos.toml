@@ -28,13 +28,10 @@ extend-ignore-re = [
     # Ignore this specific hook string, which gearbox typo'd
     "\"WillowGame\\.WillowPlayerController:CanAcessOakUpsell\"",
     # Ignore the `EInventorySortType` enum prefix
-    "IST_EquippedThenMajorTypeThenRarityThenSubtype",
-    "IST_MajorTypeThenSubtypeThenRarity",
-    "IST_MajorTypeThenRarityThenSubtype",
-    "IST_Manufacturer",
-    "IST_ClassRequirementThenRarity",
-    "IST_Value",
-    "IST_MAX",
+    "IST_\\w+",
+    # Ignore the `Ake` Ak Event prefix
+    "Ake_\\w+",
+    "AKE_\\w+",
 ]
 
 [default.extend-identifiers]
