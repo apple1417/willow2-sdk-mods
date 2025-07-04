@@ -12,7 +12,6 @@ exclude = [
     "**/__pycache__",
     "**/.*",
 
-    "AltUseVendors",
     "ApplesBorderlandsCheats",
     "ItemLevelUncapper",
     "Onezerker",
@@ -29,7 +28,6 @@ extend-exclude = [
     "**/__pycache__",
     "**/.*",
 
-    "AltUseVendors",
     "ApplesBorderlandsCheats",
     "ItemLevelUncapper",
     "Onezerker",

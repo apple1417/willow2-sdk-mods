@@ -1,0 +1,17 @@
+[project]
+name = "alt_use_vendors"
+version = "3"
+authors = [{ name = "apple1417" }]
+description = """\
+Adds alt use binds to vendors, like in BL3/Wonderlands.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/alt_use_vendors/Readme.md"
+
+[tool.sdkmod]
+name = "Alt Use Vendors"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+coop_support = "HostOnly"
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/alt_use_vendors.sdkmod"
+supported_games = ["BL2", "TPS", "AoDK"]

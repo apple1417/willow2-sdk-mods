@@ -11,30 +11,6 @@
   },
   "mods": [
     {
-      "name": "Alt Use Vendors",
-      "description": [
-        "Adds alt use binds to vendors to let you quickly refill health and ammo and sell trash, like in BL3/Wonderlands."
-      ],
-      "tagline": [
-        "Adds alt use binds to vendors, like in BL3/Wonderlands."
-      ],
-      "types": [
-        "Utility"
-      ],
-      "latest": "2.2",
-      "versions": {
-        "1.5": "https://github.com/apple1417/willow2-sdk-mods/raw/a45fde7c5edc2224c15ac0a775076aacd3d40a0a/AltUseVendors/AltUseVendors.zip",
-        "1.6": "https://github.com/apple1417/willow2-sdk-mods/raw/8273080a0bfcc922f0edaffb84bec4a9ca044b54/AltUseVendors/AltUseVendors.zip",
-        "1.7": "https://github.com/apple1417/willow2-sdk-mods/raw/704664da48f8403e34e64ea0edef543e2bcdd544/AltUseVendors/AltUseVendors.zip",
-        "2.0": "https://github.com/apple1417/willow2-sdk-mods/raw/b25d5ff91ebab5dc88035018813c6474e4556e74/AltUseVendors/AltUseVendors.zip",
-        "2.1": "https://github.com/apple1417/willow2-sdk-mods/raw/016c9cabd93fb003ead99d32859aed7234f1ed51/AltUseVendors/AltUseVendors.zip",
-        "2.2": "https://github.com/apple1417/willow2-sdk-mods/raw/master/.legacy/AltUseVendors.zip"
-      },
-      "requirements": {
-        "Enums": ">=1.0"
-      }
-    },
-    {
       "name": "Apple's Borderlands Cheats",
       "description": [
         "Adds keybinds performing various cheaty things.\n",

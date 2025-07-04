@@ -1,5 +1,8 @@
 # Changelog
 
+## Alt Use Vendors v3
+- Upgraded to v3 sdk.
+
 ## Alt Use Vendors v2.3
 Thanks to @Siggless
 
