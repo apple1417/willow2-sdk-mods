@@ -7,7 +7,6 @@ extend-exclude = [
     ".typos.toml",
 
     "AltUseVendors",
-    "ApplesBorderlandsCheats",
     "EquipLocker",
     "ItemLevelUncapper",
     "Onezerker",

@@ -1,5 +1,15 @@
 ## Changelog
 
+### Apple's Borderlands Cheats v2
+Major rewrite, upgrading to v3 sdk.
+
+To help avoid needlessly cluttering your keybinds, added a new cheats menu, though which you can get
+to any of the other binds. Additionally, all previously toggleable/cycleable cheats now have a
+spinner you can set directly from the mod options, rather than being forced to use a bind.
+
+Presets have been removed. They were quite a complex system, and their need is now better served by
+configuring the spinners to your desired defaults, and enabling/disabling the entire mod.
+
 ### Apple's Borderlands Cheats v1.13
 Fixed `One Shot Mode` not getting loaded properly.
 

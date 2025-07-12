@@ -1,0 +1,15 @@
+[project]
+name = "apples_borderlands_cheats"
+version = "2"
+authors = [{ name = "apple1417" }]
+description = """\
+Adds various useful cheats.
+"""
+
+[project.urls]
+Changelog = "https://github.com/apple1417/willow2-sdk-mods/blob/master/apples_borderlands_cheats/Readme.md"
+
+[tool.sdkmod]
+name = "Apple's Borderlands Cheats"
+license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
+download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/apples_borderlands_cheats.sdkmod"

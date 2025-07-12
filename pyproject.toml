@@ -12,7 +12,6 @@ exclude = [
     "**/__pycache__",
     "**/.*",
 
-    "ApplesBorderlandsCheats",
     "ItemLevelUncapper",
     "Onezerker",
     "PythonPartNotifier",
@@ -28,7 +27,6 @@ extend-exclude = [
     "**/__pycache__",
     "**/.*",
 
-    "ApplesBorderlandsCheats",
     "ItemLevelUncapper",
     "Onezerker",
     "PythonPartNotifier",
