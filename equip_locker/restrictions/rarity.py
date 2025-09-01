@@ -18,7 +18,8 @@ if TYPE_CHECKING:
         RARITY_VeryRare = auto()
         RARITY_Legendary = auto()
         RARITY_Seraph = auto()
-        RARITY_Rainbow = auto()
+        # BL2 ONLY:
+        # RARITY_Rainbow = auto()  # noqa: ERA001
 
 else:
     EItemRarity = unrealsdk.find_enum("EItemRarity")
@@ -52,7 +53,7 @@ ALL_RARITIES: tuple[RarityOption, ...] = (
     RarityOption("Glitch", rarity=EItemRarity.RARITY_Seraph, supported_games=Game.TPS),
     RarityOption(
         "Rainbow",
-        rarity=EItemRarity.RARITY_Rainbow,
+        rarity=EItemRarity(7),
         supported_games=Game.BL2 | Game.AoDK,
     ),
 )
