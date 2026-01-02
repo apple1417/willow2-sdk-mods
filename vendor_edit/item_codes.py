@@ -72,6 +72,142 @@ def pack_item_code(def_data: ItemDefinitionData | WeaponDefinitionData) -> str:
 
 # ==================================================================================================
 
+"""
+Willow Item Serial Format
+=========================
+
+This doesn't seem to be documented well anywhere, so I'll give it my best shot. This file only
+slightly touches the raw format, mostly preferring to rely on the game, so this may not be fully
+accurate.
+
+Firstly, decode the b64 in the brackets to get the raw bytes. Serial codes are always 40 bytes long,
+but it's common to trim trailing FF bytes - add them back just in case.
+
+```
+BL2(BwAAAACAVwAHERCgAxIcDgHEA4QFhBzE//////////8VBDuEOsQ=)
+
+07 00000000 8057 00 071110a003121c0e01c4038405841cc4ffffffffffffffff15043b843ac4 ffff
+```
+
+I've already spaced this into the key parts:
+- B0-6 = version, always 7; B8 = is_weapon 7
+- Unique id/seed, scrambles rest of serial when not 0
+- Checksum
+- Set (aka dlc?) id
+- Main contents, more below
+- Padding
+
+Most of the item code is scrambled by the unique id. See `decode_serial`, you need to run that first
+to convert the rest into usable bytes. This has already been done to the example code.
+
+After decoding, you may want to validate the checksum - see `validate_and_decode_serial_number`.
+
+Next, onto the main contents. This is a bit stream, with fields of uneven bit sizes within it. These
+are always read from the LSB towards the MSB, adding each new bit to the MSB of the value. The dumb
+easy way to think about this is joining the bits of each byte in reverse, chopping them off from the
+left, then reversing again.
+
+```
+Hex:          0x07     0x11     0x10
+Binary:     00000111 00010001 00010000
+Parts:      BBBAAAAA BBBBBBBB       BB
+
+Reversed:   11100000 10001000 00001000
+A Bits (5): ^^^^^
+B Bits (13):     ^^^ ^^^^^^^^ ^^
+
+A Reversed: 11100
+A:          00111 = 7
+
+B Reversed:      000 10001000 00
+B:               0000010001000 = 136
+```
+
+The sizes of each field change depending on if it's a weapon or item.
+
+Field                          | Bits               | Library
+:------------------------------|:-------------------|:----------------
+`WeaponTypeDefinition`         | (6 bits, 7 bits)   | `WeaponTypes`
+`BalanceDefinition`            | (10 bits, 10 bits) | `BalanceDefs`
+`ManufacturerDefinition`       | (7 bits, 4 bits)   | `Manufacturers`
+`ManufacturerGradeIndex`       | 7 bits             |
+`GameStage`                    | 7 bits             |
+`BodyPartDefinition`           | (11 bits, 6 bits)  | `WeaponParts`
+`GripPartDefinition`           | (11 bits, 6 bits)  | `WeaponParts`
+`BarrelPartDefinition`         | (11 bits, 6 bits)  | `WeaponParts`
+`SightPartDefinition`          | (11 bits, 6 bits)  | `WeaponParts`
+`StockPartDefinition`          | (11 bits, 6 bits)  | `WeaponParts`
+`ElementalPartDefinition`      | (11 bits, 6 bits)  | `WeaponParts`
+`Accessory1PartDefinition`     | (11 bits, 6 bits)  | `WeaponParts`
+`Accessory2PartDefinition`     | (11 bits, 6 bits)  | `WeaponParts`
+`MaterialPartDefinition`       | (11 bits, 6 bits)  | `WeaponParts`
+`PrefixPartDefinition`         | (11 bits, 6 bits)  | `WeaponParts`
+`TitlePartDefinition`          | (11 bits, 6 bits)  | `WeaponParts`
+
+Field                          | Bits               | Library
+:------------------------------|:-------------------|:----------------
+`ItemDefinition`               | (8 bits, 9 bits)   | `ItemTypes`
+`BalanceDefinition`            | (10 bits, 10 bits) | `BalanceDefs`
+`ManufacturerDefinition`       | (7 bits, 4 bits)   | `Manufacturers`
+`ManufacturerGradeIndex`       | 7 bits             |
+`GameStage`                    | 7 bits             |
+`AlphaItemPartDefinition`      | (10 bits, 6 bits)  | `ItemParts`
+`BetaItemPartDefinition`       | (10 bits, 6 bits)  | `ItemParts`
+`GammaItemPartDefinition`      | (10 bits, 6 bits)  | `ItemParts`
+`DeltaItemPartDefinition`      | (10 bits, 6 bits)  | `ItemParts`
+`EpsilonItemPartDefinition`    | (10 bits, 6 bits)  | `ItemParts`
+`ZetaItemPartDefinition`       | (10 bits, 6 bits)  | `ItemParts`
+`EtaItemPartDefinition`        | (10 bits, 6 bits)  | `ItemParts`
+`ThetaItemPartDefinition`      | (10 bits, 6 bits)  | `ItemParts`
+`MaterialItemPartDefinition`   | (10 bits, 6 bits)  | `ItemParts`
+`PrefixItemNamePartDefinition` | (10 bits, 6 bits)  | `ItemParts`
+`TitleItemNamePartDefinition`  | (10 bits, 6 bits)  | `ItemParts`
+
+All the parts consist of a pair of ints. If a part is not present, all bits are set to 1.
+
+Lets go parse this example into it's parts. Byte 0 bit 7 is 0, so this is an item.
+```
+(7, 17)    ItemDefinition
+(8, 116)   BalanceDefinition
+(16, 1)    ManufacturerDefinition
+28         ManufacturerGradeIndex
+28         GameStage
+(4, 4)     AlphaItemPartDefinition
+(15, 4)    BetaItemPartDefinition
+(22, 4)    GammaItemPartDefinition
+(114, 4)   DeltaItemPartDefinition
+(1023, 63) EpsilonItemPartDefinition
+(1023, 63) ZetaItemPartDefinition
+(1023, 63) EtaItemPartDefinition
+(1023, 63) ThetaItemPartDefinition
+(87, 4)    MaterialItemPartDefinition
+(236, 4)   PrefixItemNamePartDefinition
+(234, 4)   TitleItemNamePartDefinition
+```
+
+We can already see the item's level 28, and Epsilon-Theta are all None. To convert the rest, we need
+the asset library. Gibbed made a tool to extract these into convenient json:
+https://raw.githubusercontent.com/gibbed/Borderlands2Dumps/refs/heads/master/Asset%20Library%20Manager.json
+https://raw.githubusercontent.com/gibbed/BorderlandsOzDumps/refs/heads/master/Asset%20Library%20Manager.json
+https://raw.githubusercontent.com/Natsu235/Gibbed.TinyTinaAoDK.Dumps/refs/heads/main/Asset%20Library%20Manager.json
+
+You can see `config[<lib>]` is where the bit sizes you had to read actually came from.
+
+To get the part back, you want to follow the paths:
+```
+sets[<set>].libraries[<lib>].sublibraries[<2nd int>].package
+sets[<set>].libraries[<lib>].sublibraries[<2nd int>].assets[<1st int>]
+```
+
+Our set was 0, so looking at say the Delta part, you'd follow:
+```
+sets[0].libraries["ItemParts"].sublibraries[4].package     -> "GD_Shields"
+sets[0].libraries["ItemParts"].sublibraries[4].assets[114] -> "Accessory.Accessory8_Juggernaut"
+
+Delta: GD_Shields.Accessory.Accessory8_Juggernaut
+```
+"""
+
 if TYPE_CHECKING:
     from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
 
@@ -204,6 +340,53 @@ def decompress(data: bytes) -> bytes:
     return compressor.decompress(data) + compressor.flush()
 
 
+@dataclass
+class _SafeUnpackRes:
+    success: bool
+    is_weapon: bool
+    def_data: ItemDefinitionData | WeaponDefinitionData
+
+
+def safe_unpack(serial_num: bytes | bytearray) -> _SafeUnpackRes:
+    """
+    Unpacks the given serial number, safely handling cases the game rejects but we find ok.
+
+    Args:
+        serial_num: The serial number to unpack.
+        is_weapon: True if the serial number is for a weapon.
+    Returns:
+        If unpacking succeeded, if it was a weapon, and the unpacked definition data.
+    """
+    decoded = decode_serial(serial_num)
+    is_weapon = (decoded[0] >> 7) != 0
+
+    # Also detect if we're missing the weapon/item definition from the raw serial bits
+    if is_weapon:
+        unpacker, definition_slot_name = WEAPON_UNPACK, "WeaponTypeDefinition"
+
+        # Weapons read the first 13 bits after the header
+        no_definition = decoded[8] == 0xFF and (decoded[9] & 0x1F) == 0x1F  # noqa: PLR2004
+    else:
+        unpacker, definition_slot_name = ITEM_UNPACK, "ItemDefinition"
+
+        # Items read the first 17 bits after the header
+        no_definition = decoded[8] == 0xFF and decoded[9] == 0xFF and (decoded[10] & 0x01) == 0x01  # noqa: PLR2004
+
+    unpack_args = WrappedStruct(unpacker.func)
+    (serial_num_struct := unpack_args.SerialNumber).Buffer = decoded
+    serial_num_struct.State = SerialNumberState.SNS_Full
+    success, _, unpacked_def_data = unpacker(unpack_args)
+
+    # If we're missing a definition, the unpacker still works, but reports an error. Fake a success.
+    # This does miss the case where we have some other error at the same time. The most likely one
+    # would be copying a `TPSMODDED[...]` code without a definition into BL2, where some of the base
+    # parts don't exist - but then you should really also get an error on the modded parts.
+    if no_definition and not success and getattr(unpacked_def_data, definition_slot_name) is None:
+        success = True
+
+    return _SafeUnpackRes(success=success, is_weapon=is_weapon, def_data=unpacked_def_data)
+
+
 def _unpack_item_code_impl(
     code: str,
 ) -> tuple[UnpackResult, ItemDefinitionData | WeaponDefinitionData | None]:
@@ -230,47 +413,33 @@ def _unpack_item_code_impl(
     else:
         decompressed_replacements = None
 
-    # Create the new definition data
-
-    # Firstly we need to find out is a weapon or an item
-    # This is done a little weird just to avoid an extra allocation of the serial struct
-    # Convert the serial number into an unreal serial struct
-    peak_args = WrappedStruct(PEAK_IS_WEAPON.func)
-    (serial_num := peak_args.SerialNumber).Buffer = decoded_serial.ljust(40, b"\xff")
-    serial_num.State = SerialNumberState.SNS_Full
-
-    if PEAK_IS_WEAPON(peak_args):
-        is_weapon, unpacker, fields = True, WEAPON_UNPACK, WEAPON_FIELDS
-    else:
-        is_weapon, unpacker, fields = False, ITEM_UNPACK, ITEM_FIELDS
-
-    # Now unpack the serial. This one's done weirdly so that we don't need to specify what type the
-    # (required) `Def` arg is
-    unpack_args = WrappedStruct(unpacker.func)
-    unpack_args.SerialNumber = serial_num
-    success, _, unpacked_def_data = unpacker(unpack_args)
+    # Create the new definition data. Start by unpacking the serial.
+    unpack_res = safe_unpack(decoded_serial)
 
     # Now even if the code looked valid before, the game can still reject it - e.g. if someone
     # changed the game prefix, it might be asking for parts which don't exist in this game.
-    if not success:
+    if not unpack_res.success:
         return UnpackResult.GAME_REJECTED_CODE, None
 
     # If we don't have any replacements, we're done
     if decompressed_replacements is None:
-        return UnpackResult.FULL_WEAPON if is_weapon else UnpackResult.FULL_ITEM, unpacked_def_data
+        return (
+            UnpackResult.FULL_WEAPON if unpack_res.is_weapon else UnpackResult.FULL_ITEM,
+            unpack_res.def_data,
+        )
 
     # Otherwise, need to apply them all too
     success = apply_modded_replacements(
-        unpacked_def_data,
+        unpack_res.def_data,
         bytearray(decompressed_replacements),
-        fields,
+        WEAPON_FIELDS if unpack_res.is_weapon else ITEM_FIELDS,
     )
 
     result = (
         (UnpackResult.PARTIAL_ITEM, UnpackResult.PARTIAL_WEAPON),
         (UnpackResult.FULL_ITEM, UnpackResult.FULL_WEAPON),
-    )[success][is_weapon]
-    return result, unpacked_def_data
+    )[success][unpack_res.is_weapon]
+    return result, unpack_res.def_data
 
 
 def parse_item_code(code: str) -> UnpackResult | tuple[bytes, bytes | None]:
@@ -312,14 +481,14 @@ def validate_and_decode_serial_number(encoded_serial: bytes) -> bytearray | None
     Args:
         encoded_serial: The encoded serial number to decode.
     Returns:
-        The decoded serial number, or None on error.
+        The decoded serial number, padded to 40 bytes, or None on error.
     """
     # 1 byte prefix, 4 byte key, 2 byte checksum, and assume at least 1 byte of data = 8 min
     # The buffer it's going into accepts 40 max
     if len(encoded_serial) not in range(8, 40 + 1):
         return None
 
-    decoded_buffer = decode_serial(encoded_serial)
+    decoded_buffer = decode_serial(encoded_serial).ljust(40, b"\xff")
 
     # Make sure the checksum is valid
     (original_check,) = struct.unpack_from(">H", decoded_buffer, 5)
@@ -405,24 +574,43 @@ def apply_modded_replacements(
 
 def _pack_item_code_impl(def_data: ItemDefinitionData | WeaponDefinitionData) -> str:
     if def_data._type == WEAPON_DEF_DATA:
-        packer, unpacker, fields = WEAPON_PACK, WEAPON_UNPACK, WEAPON_FIELDS
+        packer, fields = WEAPON_PACK, WEAPON_FIELDS
     else:
-        packer, unpacker, fields = ITEM_PACK, ITEM_UNPACK, ITEM_FIELDS
+        packer, fields = ITEM_PACK, ITEM_FIELDS
 
-    # Start by packing the item code, then immediately unpacking it, so we can tell what slots saved
-    serial_number, _ = packer(def_data)
+    # Start by packing the item code
+    serial_num_struct, _ = packer(def_data)
+    # The return value isn't quite in a usable format yet - convert it to one
+    serial_number = bytearray(serial_num_struct.Buffer)
 
-    unpack_args = WrappedStruct(unpacker.func)
-    unpack_args.SerialNumber = serial_number
-    success, _, unpacked_def_data = unpacker(unpack_args)
-    if not success:
-        raise RuntimeError("failed to unpacked item serial code")
+    # Comparing the code we have from in game, vs what a save editor gives:
+    # editor:  87 00000000 4a7e 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3
+    # in game: 87 d1620929 ffff 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3 ff
+    #               key    check                                                             padding
+    # This code still has padding, it doesn't have a checksum yet, and despite having a key it's not
+    # encoded yet.
+
+    # Zero the encoding key.
+    serial_number[1:5] = (0, 0, 0, 0)
+
+    # Then fix the checksum
+    check = calc_serial_checksum(serial_number)
+    struct.pack_into(">H", serial_number, 5, check)
+
+    # Now try unpack the code again, so we can tell if anything changed and thus needs a replacement
+    unpack_res = safe_unpack(serial_number)
+    if not unpack_res.success:
+        raise RuntimeError(
+            "failed to unpack serial code right after packing, when checking for replacements!",
+            serial_number,
+            unpack_res.def_data,
+        )
 
     # Check if any slot changed
     replacement_bits = 0
     replacement_data = b""
     for field in fields:
-        if (original := getattr(def_data, field.name)) == getattr(unpacked_def_data, field.name):
+        if (original := getattr(def_data, field.name)) == getattr(unpack_res.def_data, field.name):
             continue
 
         # Something changed, so write it to the replacements
@@ -441,29 +629,8 @@ def _pack_item_code_impl(def_data: ItemDefinitionData | WeaponDefinitionData) ->
             case _:
                 raise RuntimeError(f"Got unexpected value while encoding item code: {original}")
 
-    # Convert the serial number into a standard (unmodded) code
-    buffer = bytearray(serial_number.Buffer)
-
-    # Comparing the code we have from in game, vs what a save editor gives:
-    # editor:  87 00000000 4a7e 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3
-    # in game: 87 d1620929 ffff 0081c7034004e10198c3708541000302c6ff7f09181b30feff9fc36082310ce3 ff
-    #               key    check                                                             padding
-    # This code still has padding, it doesn't have a checksum yet, and despite having a key it's not
-    # encoded yet.
-
-    # Zero the encoding key.
-    buffer[1:5] = (0, 0, 0, 0)
-
-    # Now fix the checksum
-    check = calc_serial_checksum(buffer)
-    struct.pack_into(">H", buffer, 5, check)
-
-    # Next, get rid of any trailing FF padding. Gibbed's editor does handle them properly, but not
-    # sure if others will.
-    buffer = buffer.rstrip(b"\xff")
-
-    # And finally, b64 it
-    base_code = b64encode(buffer).decode("ascii")
+    # Now convert the code to text format. Get rid of any trailing FF padding, and b64 it.
+    base_code = b64encode(serial_number.rstrip(b"\xff")).decode("ascii")
 
     # If we don't have any modded replacements, can return this directly as a base game code
     if replacement_bits == 0:
@@ -480,7 +647,7 @@ def _pack_item_code_impl(def_data: ItemDefinitionData | WeaponDefinitionData) ->
 # https://github.com/gibbed/Gibbed.Gearbox/blob/cdb03b048e4989c2272162ebc40f5f34f14712fd/Gibbed.Gearbox.Common/CRC32.cs#L38
 
 
-def decode_serial(encoded_serial: bytes) -> bytearray:
+def decode_serial(encoded_serial: bytes | bytearray) -> bytearray:
     """
     Decode an encoded serial number.
 

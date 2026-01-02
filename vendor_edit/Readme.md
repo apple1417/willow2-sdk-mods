@@ -1,5 +1,8 @@
 ## Changelog
 
+### Vendor Edit v5
+- Fixed that modded items with custom definitions could not be copied into an item code.
+
 ### Vendor Edit v4
 - Added support for modded item codes.
 

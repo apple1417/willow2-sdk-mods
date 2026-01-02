@@ -1,6 +1,6 @@
 [project]
 name = "vendor_edit"
-version = "4"
+version = "5"
 authors = [{ name = "apple1417" }]
 description = """\
 Lets you edit all your gear while in game, using the familiar vendor menus.
