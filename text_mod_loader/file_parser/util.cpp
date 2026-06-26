@@ -39,12 +39,12 @@ bool CaseInsensitiveStringView::operator==(std::string_view str) const {
 
 py::str to_system_encoding_py_str(const char* str) {
     return py::reinterpret_steal<py::object>(
-        PyUnicode_DecodeLocaleAndSize(str, (Py_ssize_t)std::strlen(str), nullptr));
+        PyUnicode_DecodeLocaleAndSize(str, static_cast<Py_ssize_t>(std::strlen(str)), nullptr));
 }
 
 py::str to_system_encoding_py_str(const std::string& str) {
     return py::reinterpret_steal<py::object>(
-        PyUnicode_DecodeLocaleAndSize(str.data(), (Py_ssize_t)str.size(), nullptr));
+        PyUnicode_DecodeLocaleAndSize(str.data(), static_cast<Py_ssize_t>(str.size()), nullptr));
 }
 
 bool is_command(CaseInsensitiveStringView str, bool allow_spark) {

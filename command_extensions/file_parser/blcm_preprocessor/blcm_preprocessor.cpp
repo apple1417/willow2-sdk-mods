@@ -74,7 +74,7 @@ bool check_root_tag_closed(std::string_view tag_name, RootTagState& root_tag_sta
     // Keep track of nested tags of the same type as the root
     if (tag_name == root_tag_state.tag) {
         root_tag_state.nest_count++;
-    } else if (tag_name[0] == '/' && tag_name.substr(1) == root_tag_state.tag) {
+    } else if (tag_name.at(0) == '/' && tag_name.substr(1) == root_tag_state.tag) {
         root_tag_state.nest_count--;
     }
 
@@ -94,7 +94,7 @@ size_t process_attributes_and_get_content_start(std::string_view line,
                                                 std::ostream& xml_output,
                                                 size_t tag_name_end) {
     // If there was no whitespace at the end of the tag, return immediately
-    if (line[tag_name_end] == '>') {
+    if (line.at(tag_name_end) == '>') {
         return tag_name_end + 1;
     }
 
@@ -110,7 +110,7 @@ size_t process_attributes_and_get_content_start(std::string_view line,
                                   tag_body_section_end - tag_body_section_start + 1);
 
         // We found the end of the tag
-        if (line[tag_body_section_end] == '>') {
+        if (line.at(tag_body_section_end) == '>') {
             return tag_body_section_end + 1;
         }
 
@@ -119,8 +119,8 @@ size_t process_attributes_and_get_content_start(std::string_view line,
         // of bounds while checking for `\"`s
         bool finished_attribute = false;
         for (size_t idx = tag_body_section_end + 1; idx < (line.size() - 1); idx++) {
-            auto chr = line[idx];
-            if (chr == '\\' && line[idx + 1] == '"') {
+            auto chr = line.at(idx);
+            if (chr == '\\' && line.at(idx + 1) == '"') {
                 put_xml_escaped('"', xml_output);
                 idx++;
                 continue;
@@ -154,7 +154,7 @@ void process_tag_content(std::string_view line,
     // We've not sure if we have a single or multiline tag yet
     // To avoid iterating twice, output until we get a non-whitespace char - if we get one it must
     // be a single line tag, if we reach the end of the string it must've been a multiline
-    auto ittr = line.begin() + (std::string_view::difference_type)content_start;
+    auto ittr = line.begin() + static_cast<std::string_view::difference_type>(content_start);
     for (; ittr < line.end(); ittr++) {
         auto chr = *ittr;
         if (std::isspace(chr) == 0) {
@@ -179,7 +179,7 @@ void process_tag_content(std::string_view line,
     }
     auto closing_tag_end =
         content.find_first_not_of(" \t", closing_tag_start + 2 + tag_name.size());
-    if (closing_tag_end == std::string_view::npos || content[closing_tag_end] != '>') {
+    if (closing_tag_end == std::string_view::npos || content.at(closing_tag_end) != '>') {
         throw ParserError(
             std::format("Failed to parse line (couldn't find closing tag):\n{}", line));
     }
@@ -223,11 +223,11 @@ bool preprocess_line(std::string_view line,
     // Note this may include a leading `/` if looking at a closing tag
     auto tag_name = line.substr(tag_start + 1, tag_name_end - tag_start - 1);
 
-    xml_output << '<' << tag_name << line[tag_name_end];
+    xml_output << '<' << tag_name << line.at(tag_name_end);
 
     if (check_root_tag_closed(tag_name, root_tag_state)) {
         // Add the closing `>` if we didn't previously
-        if (line[tag_name_end] != '>') {
+        if (line.at(tag_name_end) != '>') {
             xml_output << '>';
         }
         return false;
@@ -235,9 +235,9 @@ bool preprocess_line(std::string_view line,
 
     // If this was a closing tag (but not the root closing tag), we can still assume no attributes
     // and end here
-    if (tag_name[0] == '/') {
+    if (tag_name.at(0) == '/') {
         // Again may need to add the closing `>`
-        if (line[tag_name_end] != '>') {
+        if (line.at(tag_name_end) != '>') {
             xml_output << '>';
         }
         return true;
@@ -246,7 +246,7 @@ bool preprocess_line(std::string_view line,
     auto content_start = process_attributes_and_get_content_start(line, xml_output, tag_name_end);
 
     // If the tag was self closing, we can end here
-    if (line[content_start - 2] == '/') {
+    if (line.at(content_start - 2) == '/') {
         return true;
     }
 

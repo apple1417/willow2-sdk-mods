@@ -43,7 +43,7 @@ void parse_filtertool_file(std::istream& stream, ParseResult& parse_result) {
         // This is either a command, or a (non-description) category, which both mark the end of
         // the description.
         // Seek back to the start of this line, to leave the stream in a good state, then quit
-        stream.seekg(-(ptrdiff_t)line.size(), std::ios::cur);
+        stream.seekg(-static_cast<ptrdiff_t>(line.size()), std::ios::cur);
         break;
     }
 }

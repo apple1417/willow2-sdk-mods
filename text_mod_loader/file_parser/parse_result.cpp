@@ -16,7 +16,7 @@ void ParseResult::add_comment(const char* comment) {
     if (comment_view.empty()) {
         return;
     }
-    if (comment_view[0] != '@') {
+    if (comment_view.at(0) != '@') {
         this->untagged_lines.emplace_back(to_system_encoding_py_str(comment));
         return;
     }
@@ -35,10 +35,13 @@ void ParseResult::add_comment(const char* comment) {
     auto py_tag = to_system_encoding_py_str(tag_lower);
 
     if (!this->blimp_tags.contains(py_tag)) {
+        // We already checked above, plus this is a python dict, not a raw container
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
         this->blimp_tags[py_tag] = py::list{};
     }
     // Can safely use value.data() since it goes to the end of the string, we know it's null
     // terminated
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     py::cast<py::list>(this->blimp_tags[py_tag]).append(to_system_encoding_py_str(value.data()));
 }
 void ParseResult::add_comment(const std::string& comment) {
@@ -46,7 +49,7 @@ void ParseResult::add_comment(const std::string& comment) {
     if (comment.empty()) {
         return;
     }
-    if (comment[0] != '@') {
+    if (comment.at(0) != '@') {
         this->untagged_lines.emplace_back(to_system_encoding_py_str(comment));
         return;
     }
@@ -66,10 +69,13 @@ void ParseResult::add_comment(const std::string& comment) {
     auto py_tag = to_system_encoding_py_str(tag_lower);
 
     if (!this->blimp_tags.contains(py_tag)) {
+        // We already checked above, plus this is a python dict, not a raw container
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
         this->blimp_tags[py_tag] = py::list{};
     }
     // Can safely use value.data() since it goes to the end of the string, we know it's null
     // terminated
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
     py::cast<py::list>(this->blimp_tags[py_tag]).append(to_system_encoding_py_str(value.data()));
 }
 

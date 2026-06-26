@@ -103,10 +103,10 @@ std::pair<std::string_view, CommandMatch> try_match_command(std::string_view lin
     std::string line_str{line};
 
     const CommandMatch match{
-        .py_cmd = py::reinterpret_steal<py::object>(
-            PyUnicode_DecodeLocaleAndSize(cmd_str.data(), (Py_ssize_t)cmd_str.size(), nullptr)),
-        .line = py::reinterpret_steal<py::object>(
-            PyUnicode_DecodeLocaleAndSize(line_str.data(), (Py_ssize_t)line_str.size(), nullptr)),
+        .py_cmd = py::reinterpret_steal<py::object>(PyUnicode_DecodeLocaleAndSize(
+            cmd_str.data(), static_cast<Py_ssize_t>(cmd_str.size()), nullptr)),
+        .line = py::reinterpret_steal<py::object>(PyUnicode_DecodeLocaleAndSize(
+            line_str.data(), static_cast<Py_ssize_t>(line_str.size()), nullptr)),
         .cmd_len = cmd_end - line.begin()};
 
     return std::make_pair(std::string_view{non_space, cmd_end}, match);
