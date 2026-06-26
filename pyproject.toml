@@ -1,5 +1,5 @@
 [tool.pyright]
-pythonVersion = "3.13"
+pythonVersion = "3.14"
 typeCheckingMode = "strict"
 pythonPlatform = "Windows"
 
@@ -20,7 +20,7 @@ exclude = [
 ]
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py314"
 line-length = 100
 
 extend-exclude = [
