@@ -1,6 +1,6 @@
 [project]
 name = "offline_helpers"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds a few small features useful when playing offline.

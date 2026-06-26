@@ -1,5 +1,8 @@
 ## Changelog
 
+### Apple's Borderlands Cheats v3
+Minor updates for SDK v3.8.
+
 ### Apple's Borderlands Cheats v2
 Major rewrite, upgrading to v3 sdk.
 

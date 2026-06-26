@@ -1,5 +1,8 @@
 ## Changelog
 
+### Vendor Edit v6
+- Minor updates for SDK v3.8.
+
 ### Vendor Edit v5
 - Fixed that modded items with custom definitions could not be copied into an item code.
 

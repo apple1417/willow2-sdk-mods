@@ -1,6 +1,6 @@
 [project]
 name = "equip_locker"
-version = "3"
+version = "4"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds various options that prevent you from equipping certain types of items/weapons.

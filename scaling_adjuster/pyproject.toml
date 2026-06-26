@@ -1,6 +1,6 @@
 [project]
 name = "scaling_adjuster"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds an option to let you easily adjust the game's base scaling constant.

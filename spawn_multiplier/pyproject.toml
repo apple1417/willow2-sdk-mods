@@ -1,6 +1,6 @@
 [project]
 name = "spawn_multiplier"
-version = "4"
+version = "5"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds an option to let you easily multiply the amount of spawns you're getting.

@@ -1,5 +1,8 @@
 ## Changelog
 
+### Scaling Adjuster v3
+Minor updates for SDK v3.8.
+
 ### Scaling Adjuster v2
 Upgraded to v3 sdk.
 

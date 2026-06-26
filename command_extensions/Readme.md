@@ -19,6 +19,9 @@ enabled (and won't suddenly re-enable soon).
 
 ## Changelog
 
+### Command Extensions v4
+- Minor updates for SDK v3.8.
+
 ### Command Extensions v3
 - Changed the `py`, `pyexec`, and `pyb` commands back to run closer to how they did in v1.9,
   including running them under legacy mod compatibility.

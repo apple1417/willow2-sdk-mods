@@ -1,5 +1,8 @@
 # Equip Locker
 
+### Equip Locker v4
+Minor updates for SDK v3.8.
+
 ### Equip Locker v3
 Fixed not being able to load outside of BL2. Whoops.
 

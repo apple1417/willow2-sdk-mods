@@ -1,6 +1,6 @@
 [project]
 name = "enemy_level_randomizer"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Lets you randomizer the level of enemies a bit more.

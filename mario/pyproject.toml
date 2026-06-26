@@ -1,6 +1,6 @@
 [project]
 name = "mario"
-version = "2"
+version = "4"
 authors = [{ name = "apple1417" }]
 description = """\
 Jump on enemies to kill them.

@@ -1,5 +1,8 @@
 ## Changelog
 
+### True Damage Logger v3
+Minor updates for SDK v3.8.
+
 ### True Damage Logger v2
 Upgraded to v3 sdk.
 

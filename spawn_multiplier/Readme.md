@@ -20,6 +20,9 @@ The current list of blacklisted enemies is:
 
 ## Changelog
 
+### Spawn Multiplier v5
+- Minor updates for SDK v3.8.
+
 ### Spawn Multiplier v4
 - Added support for BL1, thanks to @RedxYeti.
 

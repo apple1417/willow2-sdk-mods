@@ -1,6 +1,6 @@
 [project]
 name = "hide_undiscovered_missions"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Hides undiscoved missions in the mission log.

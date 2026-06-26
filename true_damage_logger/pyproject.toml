@@ -1,6 +1,6 @@
 [project]
 name = "true_damage_logger"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Prints the actual amount of damage you deal to console, bypassing visual damage cap.

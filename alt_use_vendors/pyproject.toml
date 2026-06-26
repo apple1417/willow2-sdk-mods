@@ -1,6 +1,6 @@
 [project]
 name = "alt_use_vendors"
-version = "3"
+version = "4"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds alt use binds to vendors, like in BL3/Wonderlands.

@@ -1,5 +1,8 @@
 ## Changelog
 
+### Hide Undiscovered Missions v3
+Minor updates for SDK v3.8.
+
 ### Hide Undiscovered Missions v2
 Upgraded to v3 sdk.
 

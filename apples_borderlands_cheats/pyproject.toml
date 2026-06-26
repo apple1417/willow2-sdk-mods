@@ -1,6 +1,6 @@
 [project]
 name = "apples_borderlands_cheats"
-version = "2"
+version = "3"
 authors = [{ name = "apple1417" }]
 description = """\
 Adds various useful cheats.

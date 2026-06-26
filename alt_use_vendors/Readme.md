@@ -1,5 +1,8 @@
 # Changelog
 
+## Alt Use Vendors v4
+- Minor updates for SDK v3.8.
+
 ## Alt Use Vendors v3
 - Upgraded to v3 sdk.
 

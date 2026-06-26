@@ -5,6 +5,9 @@ Adds a few small features useful when playing offline.
 
 ## Changelog
 
+### Offline Helpers v3
+- Minor updates for SDK v3.8.
+
 ### Offline Helpers v2
 - Upgraded to v3 sdk.
 - Addresses the issues previously caused when executing an offline text mod in force offline mode.

@@ -1,5 +1,8 @@
 ## Changelog
 
+### Enemy Level Randomizer v3
+- Minor updates for SDK v3.8.
+
 ### Enemy Level Randomizer v2
 Upgraded to v3 sdk.
 
