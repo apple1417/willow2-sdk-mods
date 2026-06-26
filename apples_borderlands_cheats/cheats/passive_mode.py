@@ -25,11 +25,8 @@ class PassiveMode(StrEnum):
     FRIENDLY = "Friendly"
 
 
-@CyclableOption("Passive Enemies", PassiveMode.OFF, list(PassiveMode))
+@CyclableOption("Passive Enemies", PassiveMode.OFF, list(PassiveMode)).set_on_change()
 def passive_enemies(_: CyclableOption, new_value: str) -> None:  # noqa: D103
-    if not passive_enemies.mod or not passive_enemies.mod.is_enabled:
-        return
-
     match new_value:
         case PassiveMode.OFF:
             change_allegiance(EOpinion.OPINION_Enemy)

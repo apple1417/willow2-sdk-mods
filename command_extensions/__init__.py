@@ -6,11 +6,10 @@ import sys
 import traceback
 from functools import wraps
 from pathlib import Path
-from typing import Any, overload
+from typing import TYPE_CHECKING, Any, overload
 
 from mods_base import AbstractCommand, Library, Mod, build_mod, command, hook
 from unrealsdk import logging
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import builtins, file_parser
 from .builtins.chat import chat
@@ -24,6 +23,9 @@ from .builtins.regen_balance import regen_balance
 from .builtins.set_early import set_early
 from .builtins.suppress_chat import server_say_hook, suppress_next_chat
 from .builtins.unlock_package import unlock_package
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 try:
     import legacy_compat

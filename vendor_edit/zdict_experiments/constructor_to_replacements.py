@@ -2,9 +2,11 @@
 # ruff: noqa: T201
 import json
 import struct
-from io import BufferedWriter
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from io import BufferedWriter
 
 WEAPON_SLOTS = {
     "WeaponTypeDefinition": 15,

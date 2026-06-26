@@ -1,10 +1,13 @@
-from collections.abc import Callable, Iterator
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from unrealsdk.unreal import UObject
 
 from .ak_events import AKE_BUY, AKE_SELL, find_and_play_akevent
 from .enums import EInteractionIcons, EShopType, PlayerMark
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterator
 
 type AmmoResourcePool = UObject
 type WillowInventory = UObject

@@ -1,8 +1,12 @@
 # ruff: noqa: D103
+from typing import TYPE_CHECKING
+
 import unrealsdk
-from unrealsdk.unreal import UObject
 
 from .builtins import obj_name_splitter, parse_object
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import UObject
 
 __all__: tuple[str, ...] = (
     "is_obj_instance",

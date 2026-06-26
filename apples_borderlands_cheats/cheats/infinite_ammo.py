@@ -1,11 +1,13 @@
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import get_pc, hook
 from unrealsdk.hooks import Block
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import CyclableOption
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 
 class InfiniteAmmo(StrEnum):
@@ -14,11 +16,8 @@ class InfiniteAmmo(StrEnum):
     FULL = "Full"
 
 
-@CyclableOption("Infinite Ammo", "Off", list(InfiniteAmmo))
+@CyclableOption("Infinite Ammo", "Off", list(InfiniteAmmo)).set_on_change()
 def infinite_ammo(_: CyclableOption, new_value: str) -> None:  # noqa: D103
-    if not infinite_ammo.mod or not infinite_ammo.mod.is_enabled:
-        return
-
     match new_value:
         case InfiniteAmmo.OFF:
             consume_projectile_resource.disable()

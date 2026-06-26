@@ -1,7 +1,9 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import BoolOption, build_mod, hook
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 skip_ffyl = BoolOption(
     identifier="Skip FFYL",

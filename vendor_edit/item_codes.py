@@ -558,7 +558,7 @@ def apply_modded_replacements(
                 try:
                     decoded = obj_name.decode("utf8")
                     value = unrealsdk.find_object("Object", decoded)
-                except (ValueError, UnicodeDecodeError):
+                except ValueError, UnicodeDecodeError:
                     if decoded is None:
                         decoded = repr(obj_name)
                     logging.warning(f"Couldn't find part '{decoded}' while unpacking item code")

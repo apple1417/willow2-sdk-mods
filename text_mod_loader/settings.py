@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, TypedDict
 from mods_base import BaseOption, Game, HiddenOption
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
 
     from .text_mod import TextMod
 
@@ -95,7 +95,7 @@ def change_mod_auto_enable(mod: TextMod, enable: bool) -> None:
 
 
 @contextmanager
-def suppress_auto_enable_updates() -> Iterator[None]:
+def suppress_auto_enable_updates() -> Generator[None]:
     """Context manager which suppresses any changes to the auto enabled mod list while active."""
     global suppress_auto_enable_update_counter
     suppress_auto_enable_update_counter += 1

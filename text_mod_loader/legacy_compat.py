@@ -1,16 +1,19 @@
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from legacy_compat import legacy_compat
 from mods_base import hook, register_mod
 from unrealsdk.hooks import Block
-from unrealsdk.unreal import BoundFunction, UFunction, UObject, WrappedStruct
 
 from .anti_circular_import import all_text_mods
 from .loader import load_mod_info
 from .settings import get_cached_mod_info, update_cached_mod_info
 from .text_mod import TextMod as NewTextMod
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from unrealsdk.unreal import BoundFunction, UFunction, UObject, WrappedStruct
 
 # The old TML Python interface was a very leaky abstraction. Our internals don't really match up
 # with it anymore.

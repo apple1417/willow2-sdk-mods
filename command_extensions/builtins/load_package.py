@@ -1,12 +1,15 @@
-import argparse
 import fnmatch
 import itertools
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import unrealsdk
 from mods_base import command
 from unrealsdk import logging
+
+if TYPE_CHECKING:
+    import argparse
 
 game_dir = Path(sys.executable).parent.parent.parent
 all_upks = sorted(

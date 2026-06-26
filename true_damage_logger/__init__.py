@@ -1,8 +1,10 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import SliderOption, build_mod, get_pc, hook
 from unrealsdk import logging
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 digits_option = SliderOption(
     identifier="Minimum Digits",

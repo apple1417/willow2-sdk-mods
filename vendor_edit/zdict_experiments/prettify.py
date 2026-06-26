@@ -3,8 +3,11 @@
 import re
 import subprocess
 import sys
-from collections.abc import Callable
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 RE_EVAL_OUTPUT = re.compile(r"^.+?: (\d+)/\d+$")
 RE_NO_SYM = re.compile(rb"[^A-Za-z0-9\._]")

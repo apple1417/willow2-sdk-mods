@@ -1,5 +1,4 @@
-from collections.abc import Iterator, Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import (
     JSON,
@@ -15,10 +14,14 @@ from mods_base import (
 from unrealsdk.hooks import Block, Type
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
-from equip_locker.restrictions import Restriction
 from equip_locker.restrictions.allegiance import allegiance_restriction
 from equip_locker.restrictions.rarity import rarity_restriction
 from equip_locker.restrictions.weap_item_type import weapon_item_type_restriction
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator, Sequence
+
+    from equip_locker.restrictions import Restriction
 
 type Inventory = UObject
 
@@ -170,8 +173,6 @@ mod = build_mod(options=options)
 
 
 def _option_change_handler[J: JSON](opt: ValueOption[J], new_val: J) -> None:
-    if not mod.is_enabled:
-        return
     opt.value = new_val
     unequip_restricted_items()
 
@@ -182,7 +183,7 @@ def _add_option_change_handlers(options: Sequence[BaseOption]) -> None:
             case GroupedOption() | NestedOption():
                 _add_option_change_handlers(opt.children)
             case ValueOption():
-                opt.on_change = _option_change_handler
+                opt.on_change_while_enabled = _option_change_handler
             case _:
                 pass
 

@@ -1,8 +1,11 @@
-import argparse
+from typing import TYPE_CHECKING
 
 from mods_base import command
 
 from . import obj_name_splitter, parse_object
+
+if TYPE_CHECKING:
+    import argparse
 
 
 @command(

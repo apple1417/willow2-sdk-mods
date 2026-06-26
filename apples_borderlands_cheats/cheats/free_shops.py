@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING, Any
 import unrealsdk
 from mods_base import hook
 from unrealsdk.hooks import Block, Type
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import CyclableOption, OnOff
 
 if TYPE_CHECKING:
     from enum import auto
 
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
     from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
 
     class EShopItemStatus(UnrealEnum):
@@ -22,11 +22,8 @@ else:
     EShopItemStatus = unrealsdk.find_enum("EShopItemStatus")
 
 
-@CyclableOption("Free Shops", OnOff.OFF, list(OnOff))
+@CyclableOption("Free Shops", OnOff.OFF, list(OnOff)).set_on_change()
 def free_shops(_: CyclableOption, new_value: str) -> None:  # noqa: D103
-    if not free_shops.mod or not free_shops.mod.is_enabled:
-        return
-
     match new_value:
         case OnOff.OFF:
             on_buy_pre.disable()

@@ -1,8 +1,10 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import build_mod, get_pc, hook
 from unrealsdk.hooks import Type
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 
 @hook("WillowGame.WillowPlayerController:PostBeginPlay", Type.POST)

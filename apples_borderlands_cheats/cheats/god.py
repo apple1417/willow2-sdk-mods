@@ -1,11 +1,13 @@
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import get_pc, hook
 from unrealsdk.hooks import Block, prevent_hooking_direct_calls
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import CyclableOption
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 
 class GodMode(StrEnum):
@@ -14,11 +16,8 @@ class GodMode(StrEnum):
     FULL = "Full"
 
 
-@CyclableOption("God Mode", GodMode.OFF, list(GodMode))
+@CyclableOption("God Mode", GodMode.OFF, list(GodMode)).set_on_change()
 def god_mode(_: CyclableOption, new_value: str) -> None:  # noqa: D103
-    if not god_mode.mod or not god_mode.mod.is_enabled:
-        return
-
     match new_value:
         case GodMode.OFF:
             take_damage.disable()

@@ -1,12 +1,16 @@
-import argparse
 from contextlib import suppress
+from typing import TYPE_CHECKING
 
 import unrealsdk
 from mods_base import command
 from unrealsdk import logging
-from unrealsdk.unreal import UObject
 
 from . import RE_OBJ_NAME, obj_name_splitter, parse_object
+
+if TYPE_CHECKING:
+    import argparse
+
+    from unrealsdk.unreal import UObject
 
 suppress_exists_warning: bool = False
 

@@ -53,10 +53,8 @@ def update_spawn_limit(pop_master: UObject, limit_type: SpawnLimitType | str) ->
     min_value=1,
     max_value=25,
     description="The amount to multiply spawns by.",
-)
-def multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
-    if not opt.mod or not opt.mod.is_enabled:
-        return
+).set_on_change()
+def multiplier_slider(_opt: SliderOption, new_value: float) -> None:  # noqa: D103
     multiply_existing(new_value / multiplier_slider.value)
 
 
@@ -71,7 +69,7 @@ def multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D10
         f" {SpawnLimitType.Unlimited}: Remove it;"
         f" {SpawnLimitType.Custom}: Apply a custom multiplier."
     ),
-)
+).set_on_change()
 def spawn_limit_spinner(opt: SpinnerOption, new_value: str) -> None:  # noqa: D103
     if not opt.mod or not opt.mod.is_enabled:
         return
@@ -91,7 +89,7 @@ def spawn_limit_spinner(opt: SpinnerOption, new_value: str) -> None:  # noqa: D1
     min_value=1,
     max_value=25,
     description="The custom multiplier to apply when using 'Custom' spawn limit type.",
-)
+).set_on_change()
 def custom_multiplier_slider(opt: SliderOption, new_value: float) -> None:  # noqa: D103
     if not opt.mod or not opt.mod.is_enabled:
         return

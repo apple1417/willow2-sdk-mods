@@ -25,10 +25,9 @@ def set_scaling(val: float) -> None:
         "The base scaling constant to use, multiplied by 100.\n"
         "113 means every level the numbers get 13% higher."
     ),
-)
-def scaling_option(opt: SliderOption, new_val: float) -> None:  # noqa: D103
-    if opt.mod and opt.mod.is_enabled:
-        set_scaling(new_val)
+).set_on_change()
+def scaling_option(_opt: SliderOption, new_val: float) -> None:  # noqa: D103
+    set_scaling(new_val)
 
 
 def on_enable() -> None:  # noqa: D103

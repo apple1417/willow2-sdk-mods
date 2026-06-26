@@ -1,8 +1,10 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import HookType, hook
 from unrealsdk.hooks import Block
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 __all__: tuple[str, ...] = ("hooks",)
 

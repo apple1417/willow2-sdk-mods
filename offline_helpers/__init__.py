@@ -1,10 +1,12 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import unrealsdk
 from mods_base import BoolOption, build_mod, hook
 from unrealsdk import logging
 from unrealsdk.hooks import Block
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 force_option = BoolOption(
     identifier="Force Offline Mode",

@@ -1,7 +1,10 @@
-import argparse
+from typing import TYPE_CHECKING
 
 import unrealsdk
 from mods_base import command, get_pc
+
+if TYPE_CHECKING:
+    import argparse
 
 
 @command(

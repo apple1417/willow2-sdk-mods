@@ -1,9 +1,11 @@
 import random
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import SliderOption, build_mod, hook
 from unrealsdk.hooks import Block, prevent_hooking_direct_calls
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 offset_slider = SliderOption(
     identifier="Level Offset",

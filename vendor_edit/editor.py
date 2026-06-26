@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
@@ -12,6 +11,7 @@ from .dummy_items import DummyItem
 from .replacement_lists import create_replacement_list
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
     from enum import auto
 
     from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]

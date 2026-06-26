@@ -1,8 +1,12 @@
-from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-from mods_base import BaseOption
 from unrealsdk.unreal import UObject
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from mods_base import BaseOption
 
 type Inventory = UObject
 

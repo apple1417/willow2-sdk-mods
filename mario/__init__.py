@@ -74,11 +74,10 @@ def enable_disable_modifiers(enable: bool) -> None:  # noqa: D103
 
 
 def on_modifier_option_change(  # noqa: D103
-    opt: SliderOption,
     new_value: float,
     modifier: UObject | None,
 ) -> None:
-    if modifier is None or opt.mod is None or not opt.mod.is_enabled:
+    if modifier is None:
         return
     modifier.Value = new_value / 100
     # Remove and re-add the modifiers to apply at the new value
@@ -95,7 +94,10 @@ jump_height_slider = SliderOption(
         "Percent to adjust jump height by. Positive values increase height, negative values"
         " decrease it."
     ),
-    on_change=lambda opt, val: on_modifier_option_change(opt, val, jump_height_modifier()),
+    on_change_while_enabled=lambda _opt, val: on_modifier_option_change(
+        val,
+        jump_height_modifier(),
+    ),
 )
 move_speed_slider = SliderOption(
     identifier="Move Speed Scale",
@@ -106,7 +108,10 @@ move_speed_slider = SliderOption(
         "Percent to adjust move speed by. Positive values increase speed, negative values decrease"
         " it."
     ),
-    on_change=lambda opt, val: on_modifier_option_change(opt, val, move_speed_modifier()),
+    on_change_while_enabled=lambda _opt, val: on_modifier_option_change(
+        val,
+        move_speed_modifier(),
+    ),
 )
 
 

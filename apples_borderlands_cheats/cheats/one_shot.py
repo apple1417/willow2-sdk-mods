@@ -1,16 +1,15 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import ENGINE, get_pc, hook
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 from . import CyclableOption, OnOff
 
+if TYPE_CHECKING:
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
-@CyclableOption("One Shot Mode", OnOff.OFF, list(OnOff))
+
+@CyclableOption("One Shot Mode", OnOff.OFF, list(OnOff)).set_on_change()
 def one_shot(_: CyclableOption, new_value: str) -> None:  # noqa: D103
-    if not one_shot.mod or not one_shot.mod.is_enabled:
-        return
-
     match new_value:
         case OnOff.OFF:
             take_damage.disable()

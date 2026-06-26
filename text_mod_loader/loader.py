@@ -1,8 +1,8 @@
 import string
 import sys
 import traceback
-from collections.abc import Iterable, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from mods_base import Game, deregister_mod, register_mod
 from unrealsdk import logging
@@ -11,6 +11,9 @@ from . import file_parser
 from .anti_circular_import import TextModState, all_text_mods
 from .settings import ModInfo, get_cached_mod_info, update_cached_mod_info
 from .text_mod import TextMod
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 BINARIES_DIR = Path(sys.executable).parent.parent
 

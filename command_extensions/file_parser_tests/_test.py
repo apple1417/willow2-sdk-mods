@@ -5,12 +5,13 @@ import sys
 import warnings
 from dataclasses import dataclass
 from pathlib import Path
-from types import ModuleType
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
 if TYPE_CHECKING:
+    from types import ModuleType
+
     from command_extensions import file_parser
 
 

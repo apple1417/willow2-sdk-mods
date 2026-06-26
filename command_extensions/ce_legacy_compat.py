@@ -1,13 +1,15 @@
 # ruff: noqa: D103, N802
-import argparse
 import shlex
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import AbstractCommand, command
 
 from . import autoregister
 from . import ce_legacy_compat_builtins as builtins
+
+if TYPE_CHECKING:
+    import argparse
+    from collections.abc import Callable
 
 __all__: tuple[str, ...] = (
     "RegisterConsoleCommand",

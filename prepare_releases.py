@@ -6,10 +6,13 @@ import subprocess
 import sys
 import tomllib
 from argparse import ArgumentParser, ArgumentTypeError
-from collections.abc import Iterator
 from functools import cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 from zipfile import ZIP_DEFLATED, ZipFile
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 CMAKE_LIST_PRESETS_RE = re.compile('  "(.+)"')
 CMAKE_BUILD_DIR_BASE = Path(".out") / "build"
@@ -121,7 +124,7 @@ def iter_mod_files(mod_folder: Path, debug: bool) -> Iterator[Path]:
 
         if file.suffix in {".cpp", ".h", ".hpp"}:
             continue
-        if file.name in {"CMakeLists.txt"}:
+        if file.name in {"CMakeLists.txt"}:  # noqa: FURB171
             continue
 
         yield file

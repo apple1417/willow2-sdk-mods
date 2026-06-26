@@ -1,9 +1,12 @@
 import re
 import shlex
+from typing import TYPE_CHECKING
 
 import unrealsdk
 from unrealsdk import logging
-from unrealsdk.unreal import UObject
+
+if TYPE_CHECKING:
+    from unrealsdk.unreal import UObject
 
 __all__: tuple[str, ...] = (
     "RE_OBJ_NAME",

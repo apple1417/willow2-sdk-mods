@@ -1,14 +1,18 @@
-import argparse
 import functools
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import unrealsdk
 from mods_base import command
 from unrealsdk import logging
-from unrealsdk.unreal import UClass, UObject
 
 from . import obj_name_splitter, parse_object
 from .clone import clone_object, parse_clone_target
+
+if TYPE_CHECKING:
+    import argparse
+    from collections.abc import Callable
+
+    from unrealsdk.unreal import UClass, UObject
 
 
 # There are a bunch of different fields skills can be stored in, hence the field arg

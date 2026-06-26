@@ -1,10 +1,13 @@
-import argparse
 import fnmatch
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from mods_base import command, hook
 from unrealsdk.hooks import Block
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+
+if TYPE_CHECKING:
+    import argparse
+
+    from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 
 suppressed_patterns: dict[str, int] = {}
 suppress_global_count: int = 0

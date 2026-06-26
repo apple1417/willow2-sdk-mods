@@ -1,4 +1,3 @@
-from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, Any
 
 import unrealsdk
@@ -9,6 +8,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from .packages import ROOT
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
     from enum import auto
 
     from unrealsdk.unreal._uenum import UnrealEnum  # pyright: ignore[reportMissingModuleSource]
