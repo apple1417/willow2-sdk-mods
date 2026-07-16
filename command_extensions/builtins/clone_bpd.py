@@ -128,8 +128,8 @@ def fixup_bpd(cloned: UObject, known_clones: dict[UObject, UObject]) -> None:
     splitter=obj_name_splitter,
     description=(
         "Creates a clone of a BehaviourProvidierDefinition, as well as recursively cloning some of"
-        " the objects making it up. This may not match the exact layout of the original objects,"
-        " dump them manually to check what their new names are."
+        " the objects making it up. Names are done through counting appearances of each class,"
+        " this ensures fixed naming, dump them manually to check what their new names are."
     ),
 )
 def clone_bpd(args: argparse.Namespace) -> None:  # noqa: D103
