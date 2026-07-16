@@ -1,4 +1,5 @@
 import functools
+from collections import Counter
 from typing import TYPE_CHECKING
 
 import unrealsdk
@@ -94,6 +95,7 @@ def fixup_bpd(cloned: UObject, known_clones: dict[UObject, UObject]) -> None:
         cloned: The cloned BPD.
         known_clones: A dict of objects to their clones, used to prevent double-cloning.
     """
+    class_counter = Counter()
     for sequence in cloned.BehaviorSequences:
         # There are a bunch of other fields, but this seems to be the only used one
         for data in sequence.BehaviorData2:
@@ -108,10 +110,11 @@ def fixup_bpd(cloned: UObject, known_clones: dict[UObject, UObject]) -> None:
             cloned_behavior = clone_object(
                 behavior,
                 cloned,
-                "" if behavior.Name == behavior.Class.Name else behavior.Name,
+                f"{behavior.Class.Name}_{class_counter[behavior.Class.Name]}",
             )
             if cloned_behavior is None:
                 continue
+            class_counter[behavior.Class.Name] += 1
             known_clones[behavior] = cloned_behavior
 
             data.Behavior = cloned_behavior
