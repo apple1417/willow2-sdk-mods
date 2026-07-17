@@ -96,14 +96,14 @@ def deregister(cmd: AbstractCommand) -> None:
 
 
 @overload
-def autoregister(obj: AbstractCommand, /) -> AbstractCommand: ...
+def autoregister[C: AbstractCommand](obj: C, /) -> C: ...
 
 
 @overload
 def autoregister(obj: Mod, /) -> Mod: ...
 
 
-def autoregister(obj: AbstractCommand | Mod, /) -> AbstractCommand | Mod:
+def autoregister[C: AbstractCommand](obj: C | Mod, /) -> C | Mod:
     """
     Wraps the enable/disable methods to automatically (de)register commands when called.
 
