@@ -95,7 +95,7 @@ def fixup_bpd(cloned: UObject, known_clones: dict[UObject, UObject]) -> None:
         cloned: The cloned BPD.
         known_clones: A dict of objects to their clones, used to prevent double-cloning.
     """
-    class_counter: Counter[UClass] = Counter()
+    class_counter: Counter[str] = Counter()
     for sequence in cloned.BehaviorSequences:
         # There are a bunch of other fields, but this seems to be the only used one
         for data in sequence.BehaviorData2:
