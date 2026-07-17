@@ -19,6 +19,10 @@ enabled (and won't suddenly re-enable soon).
 
 ## Changelog
 
+### Command Extensions v5
+- `autoregister` now uses a generic type to return the same type of AbstractCommand.
+- `clone_bpd` now has guaranteed sub object naming through a class counter.
+
 ### Command Extensions v4
 - Minor updates for SDK v3.8.
 
