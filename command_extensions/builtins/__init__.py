@@ -48,7 +48,7 @@ def obj_name_splitter(args: str) -> list[str]:
     return list(lex)
 
 
-def parse_object(name: str) -> UObject | None:
+def parse_object(name: str, fallback_class: str = "Object") -> UObject | None:
     """
     Given an object name, returns the object.
 
@@ -56,6 +56,7 @@ def parse_object(name: str) -> UObject | None:
 
     Args:
         name: The object name to look for
+        fallback_class: Class to use if none can be found from the object name
     Returns:
         The parsed object, or None on error.
     """
@@ -64,7 +65,7 @@ def parse_object(name: str) -> UObject | None:
         logging.error(f"Unable to parse object name {name}")
         return None
 
-    class_ = match.group("class") or "Object"
+    class_ = match.group("class") or fallback_class
     fullname = match.group("fullname")
     try:
         return unrealsdk.find_object(class_, fullname)
