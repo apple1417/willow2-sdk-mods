@@ -325,5 +325,6 @@ case, you can simply call them as normal.
 
 ```py
 from mods_base import get_pc
-get_pc().ConsoleCommand(f"exec \"{filename}\"")
+
+get_pc().ConsoleCommand(f'exec "{filename}"')
 ```
