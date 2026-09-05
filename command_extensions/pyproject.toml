@@ -14,6 +14,7 @@ name = "Command Extensions"
 license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
 coop_support = "ClientSide"
 download = "https://github.com/apple1417/willow2-sdk-mods/releases/download/nightly/command_extensions.zip"
+uses_native_modules = true
 
 [tool.sdkmod_release_script]
 files = [
